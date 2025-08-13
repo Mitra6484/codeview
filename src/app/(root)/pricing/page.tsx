@@ -19,25 +19,25 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(false)
   const [isLoading, setIsLoading] = useState<string | null>(null)
-  const [stripeReady, setStripeReady] = useState(false)
   const { user } = useUser()
-
-  // Stripe config only on client
-  useEffect(() => {
-    setStripeReady(isStripeConfigured())
-  }, [])
 
   const subscription = useQuery(api.subscriptions.getUserSubscription, {
     userId: user?.id || "",
   })
 
-  const handleSubscribe = async (priceId: string) => {
+  const stripeConfigured = isStripeConfigured()
+
+  useEffect(() => {
+    setIsLoading(null)
+  }, [])
+
+  const handleSubscribe = async (priceId: string, planName: string) => {
     if (!user) {
       toast.error("Please sign in to subscribe")
       return
     }
 
-    if (!stripeReady) {
+    if (!stripeConfigured) {
       toast.error("Payment system is not configured")
       return
     }
@@ -49,10 +49,8 @@ export default function PricingPage() {
 
     setIsLoading(priceId)
     try {
-      const sessionUrl = await createCheckoutSession(priceId)
-      if (sessionUrl) {
-        window.location.href = sessionUrl
-      }
+      await createCheckoutSession(priceId)
+      setIsLoading(null)
     } catch (error) {
       toast.error("Failed to start checkout process")
       console.error(error)
@@ -63,17 +61,15 @@ export default function PricingPage() {
   const handleManageSubscription = async () => {
     if (!user) return
 
-    if (!stripeReady) {
+    if (!stripeConfigured) {
       toast.error("Payment system is not configured")
       return
     }
 
     setIsLoading("portal")
     try {
-      const portalUrl = await createPortalSession()
-      if (portalUrl) {
-        window.location.href = portalUrl
-      }
+      await createPortalSession()
+      setIsLoading(null)
     } catch (error) {
       toast.error("Failed to open billing portal")
       console.error(error)
@@ -92,7 +88,7 @@ export default function PricingPage() {
       <div className="container mx-auto py-10">
         <BreadcrumbNav items={[{ label: "Pricing" }]} className="mb-4" />
 
-        {!stripeReady && (
+        {!stripeConfigured && (
           <Alert className="mb-6">
             <AlertTriangleIcon className="h-4 w-4" />
             <AlertDescription>
@@ -142,13 +138,13 @@ export default function PricingPage() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" variant="outline" disabled={isSubscribed}>
+              <Button className="w-full bg-transparent" variant="outline" disabled={!isSubscribed}>
                 {!isSubscribed ? "Current Plan" : "Downgrade"}
               </Button>
             </CardFooter>
           </Card>
 
-          {/* Premium Monthly */}
+          {/* Premium Monthly Plan */}
           <Card className={`relative ${!isYearly ? "border-primary shadow-lg scale-105" : ""}`}>
             {!isYearly && (
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -181,15 +177,20 @@ export default function PricingPage() {
                 <Button
                   className="w-full"
                   onClick={handleManageSubscription}
-                  disabled={isLoading === "portal" || !stripeReady}
+                  disabled={isLoading === "portal" || !stripeConfigured}
                 >
                   {isLoading === "portal" ? "Loading..." : "Manage Subscription"}
                 </Button>
               ) : (
                 <Button
                   className="w-full"
-                  onClick={() => handleSubscribe(STRIPE_PLANS.PREMIUM_MONTHLY.priceId!)}
-                  disabled={isLoading === STRIPE_PLANS.PREMIUM_MONTHLY.priceId || !stripeReady || isYearly}
+                  onClick={() => handleSubscribe(STRIPE_PLANS.PREMIUM_MONTHLY.priceId!, "Premium Monthly")}
+                  disabled={
+                    isLoading === STRIPE_PLANS.PREMIUM_MONTHLY.priceId ||
+                    !stripeConfigured ||
+                    !STRIPE_PLANS.PREMIUM_MONTHLY.priceId ||
+                    isYearly
+                  }
                   variant={isYearly ? "outline" : "default"}
                 >
                   {isLoading === STRIPE_PLANS.PREMIUM_MONTHLY.priceId ? "Loading..." : "Subscribe"}
@@ -198,7 +199,7 @@ export default function PricingPage() {
             </CardFooter>
           </Card>
 
-          {/* Premium Yearly */}
+          {/* Premium Yearly Plan */}
           <Card className={`relative ${isYearly ? "border-primary shadow-lg scale-105" : ""}`}>
             {isYearly && (
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -232,15 +233,20 @@ export default function PricingPage() {
                 <Button
                   className="w-full"
                   onClick={handleManageSubscription}
-                  disabled={isLoading === "portal" || !stripeReady}
+                  disabled={isLoading === "portal" || !stripeConfigured}
                 >
                   {isLoading === "portal" ? "Loading..." : "Manage Subscription"}
                 </Button>
               ) : (
                 <Button
                   className="w-full"
-                  onClick={() => handleSubscribe(STRIPE_PLANS.PREMIUM_YEARLY.priceId!)}
-                  disabled={isLoading === STRIPE_PLANS.PREMIUM_YEARLY.priceId || !stripeReady || !isYearly}
+                  onClick={() => handleSubscribe(STRIPE_PLANS.PREMIUM_YEARLY.priceId!, "Premium Yearly")}
+                  disabled={
+                    isLoading === STRIPE_PLANS.PREMIUM_YEARLY.priceId ||
+                    !stripeConfigured ||
+                    !STRIPE_PLANS.PREMIUM_YEARLY.priceId ||
+                    !isYearly
+                  }
                   variant={!isYearly ? "outline" : "default"}
                 >
                   {isLoading === STRIPE_PLANS.PREMIUM_YEARLY.priceId ? "Loading..." : "Subscribe"}
