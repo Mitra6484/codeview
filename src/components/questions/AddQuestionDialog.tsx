@@ -207,7 +207,7 @@ export default function AddQuestionDialog({ open, onOpenChange, questionToEdit }
                         <Checkbox
                           id={`language-${language.id}`}
                           checked={supportedLanguages.includes(language.id)}
-                          onCheckedChange={(checked: boolean ) => handleLanguageToggle(language.id, checked as boolean)}
+                          onCheckedChange={(checked) => handleLanguageToggle(language.id, checked as boolean)}
                         />
                         <label
                           htmlFor={`language-${language.id}`}

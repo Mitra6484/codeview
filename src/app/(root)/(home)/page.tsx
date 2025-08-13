@@ -11,9 +11,8 @@ import MeetingModal from "@/components/MeetingModal";
 import LoaderUI from "@/components/LoaderUI";
 import { Loader2Icon } from "lucide-react";
 import MeetingCard from "@/components/MeetingCard";
-import LandingPageLink from "@/components/LandingPageLink";
 
-export default function Dashboard() {
+export default function Home() {
   const router = useRouter();
   const { isInterviewer, isCandidate, isLoading } = useUserRole();
   const interviews = useQuery(api.interviews.getMyInterviews);
@@ -41,19 +40,14 @@ export default function Dashboard() {
     <div className="container max-w-7xl mx-auto p-6">
       {/* WELCOME SECTION */}
       <div className="rounded-lg bg-card p-6 border shadow-sm mb-10">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-              Welcome back!
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              {isInterviewer
-                ? "Manage your interviews and review candidates effectively"
-                : "Access your upcoming interviews and preparations"}
-            </p>
-          </div>
-          <LandingPageLink variant="button" />
-        </div>
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+          Welcome back!
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          {isInterviewer
+            ? "Manage your interviews and review candidates effectively"
+            : "Access your upcoming interviews and preparations"}
+        </p>
       </div>
 
       {isInterviewer ? (

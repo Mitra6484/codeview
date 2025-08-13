@@ -18,12 +18,10 @@ import { InterviewComments } from "@/components/InterviewComments"
 import PageTransition from "@/components/PageTransition"
 import { useUserRole } from "@/hooks/useUserRole"
 import { useRouter } from "next/navigation"
-import LandingPageLink from "@/components/LandingPageLink"
-import BreadcrumbNav from "@/components/BreadcrumbNav"
 
 type Interview = Doc<"interviews">
 
-function AdminDashboardPage() {
+function DashboardPage() {
   const router = useRouter();
   const { isInterviewer, isLoading } = useUserRole();
   const users = useQuery(api.users.getUsers)
@@ -53,17 +51,10 @@ function AdminDashboardPage() {
   return (
     <PageTransition>
       <div className="container mx-auto py-10">
-        <BreadcrumbNav 
-          items={[
-            { label: "Admin Dashboard" }
-          ]} 
-          className="mb-4"
-        />
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
           <div className="flex gap-3">
-            <LandingPageLink variant="button" />
-            <Link href="/admin-dashboard/questions">
+            <Link href="/dashboard/questions">
               <Button variant="outline">
                 <CodeIcon className="h-4 w-4 mr-2" />
                 Manage Questions
@@ -163,4 +154,4 @@ function AdminDashboardPage() {
   )
 }
 
-export default AdminDashboardPage
+export default DashboardPage

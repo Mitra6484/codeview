@@ -11,10 +11,10 @@ const { isCandidate, isLoading } = useUserRole();
 if (isCandidate || isLoading) return null;
 
   return (
-    <Link href={"/admin-dashboard"}>
+    <Link href={"/dashboard"}>
       <Button className="gap-2 font-medium" size={"sm"}>
         <SparklesIcon className="size-4" />
-        Admin Dashboard
+        Dashboard
       </Button>
     </Link>
   );

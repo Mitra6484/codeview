@@ -19,19 +19,14 @@ import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import toast from "react-hot-toast"
 
+// Sound effect for new notifications
+const notificationSound = new Audio("/notification.mp3")
+
 export function NotificationBell() {
   const { user } = useUser()
   const [isOpen, setIsOpen] = useState(false)
   const lastNotificationRef = useRef<string | null>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
-  const notificationSoundRef = useRef<HTMLAudioElement | null>(null)
-
-  // Initialize audio on client side
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      notificationSoundRef.current = new Audio("/notification.mp3")
-    }
-  }, [])
 
   const notifications = useQuery(api.notifications.getNotifications, {
     userId: user?.id || "",
@@ -96,7 +91,7 @@ export function NotificationBell() {
         lastNotificationRef.current = latestNotification._id
         if (!latestNotification.read) {
           // Play sound
-          notificationSoundRef.current?.play().catch(() => {})
+          notificationSound.play().catch(() => {})
           
           // Show toast with different styling based on notification type
           toast(latestNotification.message, {

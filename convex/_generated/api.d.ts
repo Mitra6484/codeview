@@ -18,7 +18,6 @@ import type * as http from "../http.js";
 import type * as interviews from "../interviews.js";
 import type * as notifications from "../notifications.js";
 import type * as questions from "../questions.js";
-import type * as subscriptions from "../subscriptions.js";
 import type * as users from "../users.js";
 import type * as votes from "../votes.js";
 
@@ -36,7 +35,6 @@ declare const fullApi: ApiFromModules<{
   interviews: typeof interviews;
   notifications: typeof notifications;
   questions: typeof questions;
-  subscriptions: typeof subscriptions;
   users: typeof users;
   votes: typeof votes;
 }>;

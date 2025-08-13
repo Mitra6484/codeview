@@ -18,21 +18,12 @@ interface PlagiarismAlertProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   result: CodeAnalysisResult
-  onRequestManualReview: () => void
-  onDismiss: () => void
-  canDismiss: boolean // Only candidates can dismiss
+  onConfirm: () => void
 }
 
-export function PlagiarismAlert({
-  isOpen,
-  onOpenChange,
-  result,
-  onRequestManualReview,
-  onDismiss,
-  canDismiss,
-}: PlagiarismAlertProps) {
+export function PlagiarismAlert({ isOpen, onOpenChange, result, onConfirm }: PlagiarismAlertProps) {
   return (
-    <AlertDialog open={isOpen} onOpenChange={canDismiss ? onOpenChange : undefined}>
+    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-h-[80vh] overflow-hidden">
         <AlertDialogHeader>
           <div className="flex items-center gap-2 text-destructive">
@@ -55,23 +46,13 @@ export function PlagiarismAlert({
                   <p className="text-muted-foreground">{result.suggestions}</p>
                 </div>
               )}
-              {canDismiss ? (
-                <p>If you believe this is a false positive, you can request a manual review from the interviewers.</p>
-              ) : (
-                <p>The candidate can dismiss this alert or request a manual review.</p>
-              )}
+              <p>How would you like to proceed with this interview?</p>
             </AlertDialogDescription>
           </ScrollArea>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          {canDismiss ? (
-            <>
-              <AlertDialogCancel onClick={onDismiss}>Dismiss</AlertDialogCancel>
-              <AlertDialogAction onClick={onRequestManualReview}>Request Manual Review</AlertDialogAction>
-            </>
-          ) : (
-            <AlertDialogCancel onClick={() => onOpenChange(false)}>Close</AlertDialogCancel>
-          )}
+          <AlertDialogCancel>Dismiss</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>Flag for Review</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -1,484 +1,344 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Textarea } from "@/components/ui/textarea"
-import {
-  PlayIcon,
-  LoaderIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  AlertTriangleIcon,
-  BrainIcon,
-  CrownIcon,
-  LockIcon,
-} from "lucide-react"
-import { executeCode } from "@/actions/execute-code"
-import { analyzeCode } from "@/actions/analyze-code"
+import { useState, useEffect } from "react"
+import { useQuery } from "convex/react"
+import { api } from "../../convex/_generated/api"
+import type { Doc } from "../../convex/_generated/dataModel"
 import { LANGUAGES } from "@/constants"
-import { useSubscription } from "@/hooks/useSubscription"
-import { useUserRole } from "@/hooks/useUserRole"
-import { useCall } from "@stream-io/video-react-sdk"
-import toast from "react-hot-toast"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./ui/resizable"
+import { ScrollArea, ScrollBar } from "./ui/scroll-area"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { AlertCircleIcon, BookIcon, LightbulbIcon, PlayIcon, SendIcon } from "lucide-react"
+import Editor from "@monaco-editor/react"
+import LoaderUI from "./LoaderUI"
+import { Button } from "./ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
+import { Textarea } from "./ui/textarea"
+import { executeCode, type ExecuteCodeResult } from "../actions/execute-code"
+import { analyzeCode, type CodeAnalysisResult } from "../actions/analyze-code"
+import { ExecutionResult } from "./ExecutionResult"
+import { AnalysisResult } from "./AnalysisResult"
+
+type Question = Doc<"questions">
+
+interface Example {
+  input: string
+  output: string
+  explanation?: string
+}
 
 interface CodeEditorProps {
-  onAnalysisResult?: (result: any) => void
-  isVisible?: boolean
-  onToggleVisibility?: () => void
-  currentQuestion?: {
-    _id: string
-    title: string
-    description: string
-    examples: Array<{
-      input: string
-      output: string
-      explanation?: string
-    }>
-    constraints?: string[]
-    supportedLanguages: string[]
-    starterCode: Record<string, string>
-  }
+  onAnalysisResult?: (result: CodeAnalysisResult) => void
 }
 
-interface ExecutionResult {
-  success: boolean
-  output?: string
-  error?: string
-  executionTime?: number
-}
-
-interface AnalysisResult {
-  isPlagiarized: boolean
-  confidence: number
-  sources: string[]
-  explanation: string
-  suggestions: string[]
-}
-
-export default function CodeEditor({
-  onAnalysisResult,
-  isVisible = true,
-  onToggleVisibility,
-  currentQuestion,
-}: CodeEditorProps) {
-  const [selectedLanguage, setSelectedLanguage] = useState("javascript")
+function CodeEditor({ onAnalysisResult }: CodeEditorProps) {
+  const questions = useQuery(api.questions.getAllQuestions)
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null)
+  const [language, setLanguage] = useState<"javascript" | "python" | "java">(LANGUAGES[0].id)
   const [code, setCode] = useState("")
+  const [input, setInput] = useState("")
+  const [activeTab, setActiveTab] = useState<"input" | "output" | "analysis">("input")
   const [isExecuting, setIsExecuting] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null)
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
-  const [activeTab, setActiveTab] = useState("editor")
+  const [executionResult, setExecutionResult] = useState<ExecuteCodeResult | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<CodeAnalysisResult | null>(null)
 
-  const { isPremium } = useSubscription()
-  const { isInterviewer } = useUserRole()
-  const call = useCall()
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const selectedQuestion = selectedQuestionId ? questions?.find((q: Question) => q._id === selectedQuestionId) : questions?.[0]
 
-  // Load starter code when question or language changes
   useEffect(() => {
-    if (currentQuestion?.starterCode) {
-      const starterCode = currentQuestion.starterCode[selectedLanguage]
-      if (starterCode) {
-        setCode(starterCode)
-      }
+    if (questions && questions.length > 0 && !selectedQuestionId) {
+      setSelectedQuestionId(questions[0]._id)
     }
-  }, [currentQuestion, selectedLanguage])
+  }, [questions, selectedQuestionId])
 
-  // Broadcast code changes to other participants
   useEffect(() => {
-    if (call) {
-      const timeoutId = setTimeout(() => {
-        call.sendCustomEvent({
-          type: "code-changed",
-          data: {
-            code,
-            language: selectedLanguage,
-            timestamp: Date.now(),
-          },
-        })
-      }, 1000) // Debounce for 1 second
-
-      return () => clearTimeout(timeoutId)
+    if (selectedQuestion && selectedQuestion.starterCode[language]) {
+      setCode(selectedQuestion.starterCode[language])
     }
-  }, [code, selectedLanguage, call])
+  }, [selectedQuestion, language])
 
-  // Listen for code changes from other participants
-  useEffect(() => {
-    if (!call) return
-
-    const handleCodeChange = (event: any) => {
-      if (event.type === "code-changed" && !isInterviewer) {
-        // Only sync code for non-interviewers (candidates)
-        setCode(event.data.code)
-        setSelectedLanguage(event.data.language)
-      }
+  const handleQuestionChange = (questionId: string) => {
+    setSelectedQuestionId(questionId)
+    const question = questions?.find((q: Question) => q._id === questionId)
+    if (question && question.starterCode[language]) {
+      setCode(question.starterCode[language])
     }
+  }
 
-    const handleExecutionResult = (event: any) => {
-      if (event.type === "execution-result") {
-        setExecutionResult(event.data)
-        setActiveTab("output")
-      }
+  const handleLanguageChange = (newLanguage: "javascript" | "python" | "java") => {
+    if (selectedQuestion && selectedQuestion.supportedLanguages.includes(newLanguage)) {
+      setLanguage(newLanguage)
+      setCode(selectedQuestion.starterCode[newLanguage] || "")
     }
+  }
 
-    const handleAnalysisResult = (event: any) => {
-      if (event.type === "analysis-result") {
-        setAnalysisResult(event.data)
-        setActiveTab("analysis")
-        onAnalysisResult?.(event.data)
-      }
-    }
-
-    call.on("custom", handleCodeChange)
-    call.on("custom", handleExecutionResult)
-    call.on("custom", handleAnalysisResult)
-
-    return () => {
-      call.off("custom", handleCodeChange)
-      call.off("custom", handleExecutionResult)
-      call.off("custom", handleAnalysisResult)
-    }
-  }, [call, isInterviewer, onAnalysisResult])
-
-  const handleExecuteCode = async () => {
-    if (!code.trim()) {
-      toast.error("Please write some code first")
-      return
-    }
-
+  const handleRunCode = async () => {
     setIsExecuting(true)
-    setExecutionResult(null)
+    setActiveTab("output")
 
     try {
-      const result = await executeCode({ code, language: selectedLanguage as "javascript" | "python" | "java" })
+      const result = await executeCode({
+        language,
+        code,
+        input,
+      })
+
       setExecutionResult(result)
-      setActiveTab("output")
-
-      // Broadcast execution result to all participants
-      if (call) {
-        call.sendCustomEvent({
-          type: "execution-result",
-          data: result,
-        })
-      }
-
-      if (result.success) {
-        toast.success("Code executed successfully!")
-      } else {
-        toast.error("Code execution failed")
-      }
     } catch (error) {
-      const errorResult = {
+      console.error("Failed to execute code:", error)
+      setExecutionResult({
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error occurred",
-      }
-      setExecutionResult(errorResult)
-      setActiveTab("output")
-      toast.error("Failed to execute code")
+        output: "",
+        error: "Failed to execute code. Please try again.",
+      })
     } finally {
       setIsExecuting(false)
     }
   }
 
-  const handleAnalyzeCode = async () => {
-    if (!isPremium) {
-      toast.error("AI Analysis is a premium feature. Please upgrade your plan.")
-      return
-    }
-
-    if (!code.trim()) {
-      toast.error("Please write some code first")
-      return
-    }
+  const handleSubmitCode = async () => {
+    if (!selectedQuestion) return
 
     setIsAnalyzing(true)
-    setAnalysisResult(null)
+    setActiveTab("analysis")
 
     try {
-      const result = await analyzeCode({ 
-        code, 
-        language: selectedLanguage, 
-        questionTitle: currentQuestion?.title || "Code Analysis",
-        questionDescription: currentQuestion?.description || "Code submitted for analysis"
+      const result = await analyzeCode({
+        code,
+        language,
+        questionTitle: selectedQuestion.title,
+        questionDescription: selectedQuestion.description,
       })
-      
-      // Transform the result to match our local AnalysisResult interface
-      const transformedResult: AnalysisResult = {
-        isPlagiarized: result.isPlagiarized,
-        confidence: result.confidence,
-        sources: [], // CodeAnalysisResult doesn't have sources
-        explanation: result.reasoning,
-        suggestions: result.suggestions ? [result.suggestions] : []
-      }
-      
-      setAnalysisResult(transformedResult)
-      setActiveTab("analysis")
 
-      // Broadcast analysis result to all participants
-      if (call) {
-        call.sendCustomEvent({
-          type: "analysis-result",
-          data: result,
-        })
-      }
+      setAnalysisResult(result)
 
-      onAnalysisResult?.(result)
-
-      if (result.isPlagiarized) {
-        toast.error(`Potential plagiarism detected (${result.confidence}% confidence)`)
-      } else {
-        toast.success("Code analysis completed - No plagiarism detected")
+      // Call the callback if provided
+      if (onAnalysisResult) {
+        onAnalysisResult(result)
       }
     } catch (error) {
-      toast.error("Failed to analyze code")
-      console.error("Analysis error:", error)
+      console.error("Failed to analyze code:", error)
+      setAnalysisResult({
+        isPlagiarized: false,
+        confidence: 0,
+        reasoning: "Failed to analyze code. Please try again.",
+      })
     } finally {
       setIsAnalyzing(false)
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Tab") {
-      e.preventDefault()
-      const textarea = textareaRef.current
-      if (textarea) {
-        const start = textarea.selectionStart
-        const end = textarea.selectionEnd
-        const newCode = code.substring(0, start) + "  " + code.substring(end)
-        setCode(newCode)
-
-        // Set cursor position after the inserted spaces
-        setTimeout(() => {
-          textarea.selectionStart = textarea.selectionEnd = start + 2
-        }, 0)
-      }
-    }
+  if (!questions) return <LoaderUI />
+  if (questions.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-4rem-1px)]">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">No questions available</h2>
+          <p className="text-muted-foreground">Please add questions in the dashboard to start coding.</p>
+        </div>
+      </div>
+    )
   }
 
-  if (!isVisible) return null
+  if (!selectedQuestion) return <LoaderUI />
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b bg-muted/50">
-        <div className="flex items-center gap-2">
-          <h3 className="font-medium">Code Editor</h3>
-          {isPremium && (
-            <Badge variant="secondary" className="text-xs">
-              <CrownIcon className="w-3 h-3 mr-1" />
-              Premium
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {LANGUAGES.map((lang) => (
-                <SelectItem key={lang.id} value={lang.id}>
-                  {lang.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+    <ResizablePanelGroup direction="vertical" className="min-h-[calc(100vh-4rem-1px)]">
+      {/* QUESTION SECTION */}
+      <ResizablePanel defaultSize={30} minSize={20}>
+        <ScrollArea className="h-full">
+          <div className="p-6">
+            <div className="max-w-4xl mx-auto space-y-6">
+              {/* HEADER */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-semibold tracking-tight">{selectedQuestion.title}</h2>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Choose your language and solve the problem</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Select value={selectedQuestionId || ""} onValueChange={handleQuestionChange}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select question" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {questions.map((q: Question) => (
+                        <SelectItem key={q._id} value={q._id}>
+                          {q.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-      {/* Code Editor */}
-      <div className="flex-1 flex flex-col">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="editor">Editor</TabsTrigger>
-            <TabsTrigger value="output">
-              Output
-              {executionResult && (
-                <Badge variant={executionResult.success ? "default" : "destructive"} className="ml-2 text-xs">
-                  {executionResult.success ? "✓" : "✗"}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="analysis">
-              AI Analysis
-              {!isPremium && <LockIcon className="w-3 h-3 ml-1" />}
-              {analysisResult && (
-                <Badge variant={analysisResult.isPlagiarized ? "destructive" : "default"} className="ml-2 text-xs">
-                  {analysisResult.isPlagiarized ? "⚠" : "✓"}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="editor" className="flex-1 flex flex-col mt-0">
-            <div className="flex-1 p-3">
-              <Textarea
-                ref={textareaRef}
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={`Write your ${selectedLanguage} code here...`}
-                className="h-full font-mono text-sm resize-none"
-                style={{ minHeight: "400px" }}
-              />
-            </div>
-            <div className="p-3 border-t bg-muted/50">
-              <div className="flex gap-2">
-                <Button onClick={handleExecuteCode} disabled={isExecuting || !code.trim()} className="flex-1">
-                  {isExecuting ? (
-                    <LoaderIcon className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <PlayIcon className="w-4 h-4 mr-2" />
-                  )}
-                  Run Code
-                </Button>
-                <Button
-                  onClick={handleAnalyzeCode}
-                  disabled={isAnalyzing || !code.trim() || !isPremium}
-                  variant="outline"
-                  className="flex-1 bg-transparent"
-                >
-                  {isAnalyzing ? (
-                    <LoaderIcon className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <BrainIcon className="w-4 h-4 mr-2" />
-                  )}
-                  {isPremium ? "Analyze Code" : "Analyze (Premium)"}
-                </Button>
+                  <Select value={language} onValueChange={handleLanguageChange}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue>
+                        <div className="flex items-center gap-2">
+                          <img src={`/${language}.png`} alt={language} className="w-5 h-5 object-contain" />
+                          {LANGUAGES.find((l) => l.id === language)?.name}
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LANGUAGES.filter((lang) => selectedQuestion.supportedLanguages.includes(lang.id)).map((lang) => (
+                        <SelectItem key={lang.id} value={lang.id}>
+                          <div className="flex items-center gap-2">
+                            <img src={`/${lang.id}.png`} alt={lang.name} className="w-5 h-5 object-contain" />
+                            {lang.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
-          </TabsContent>
 
-          <TabsContent value="output" className="flex-1 mt-0">
-            <div className="p-3 h-full">
-              {executionResult ? (
-                <Card className="h-full">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      {executionResult.success ? (
-                        <CheckCircleIcon className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <XCircleIcon className="w-4 h-4 text-red-500" />
-                      )}
-                      Execution {executionResult.success ? "Successful" : "Failed"}
-                      {executionResult.executionTime && (
-                        <Badge variant="outline" className="ml-auto">
-                          {executionResult.executionTime}ms
-                        </Badge>
-                      )}
-                    </CardTitle>
+              {/* PROBLEM DESC. */}
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-2">
+                  <BookIcon className="h-5 w-5 text-primary/80" />
+                  <CardTitle>Problem Description</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm leading-relaxed">
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <p className="whitespace-pre-line">{selectedQuestion.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* PROBLEM EXAMPLES */}
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-2">
+                  <LightbulbIcon className="h-5 w-5 text-yellow-500" />
+                  <CardTitle>Examples</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-full w-full rounded-md border">
+                    <div className="p-4 space-y-4">
+                      {selectedQuestion.examples.map((example: Example, index: number) => (
+                        <div key={index} className="space-y-2">
+                          <p className="font-medium text-sm">Example {index + 1}:</p>
+                          <ScrollArea className="h-full w-full rounded-md">
+                            <pre className="bg-muted/50 p-3 rounded-lg text-sm font-mono">
+                              <div>Input: {example.input}</div>
+                              <div>Output: {example.output}</div>
+                              {example.explanation && (
+                                <div className="pt-2 text-muted-foreground">Explanation: {example.explanation}</div>
+                              )}
+                            </pre>
+                            <ScrollBar orientation="horizontal" />
+                          </ScrollArea>
+                        </div>
+                      ))}
+                    </div>
+                    <ScrollBar />
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+              {/* CONSTRAINTS */}
+              {selectedQuestion.constraints && selectedQuestion.constraints.length > 0 && (
+                <Card>
+                  <CardHeader className="flex flex-row items-center gap-2">
+                    <AlertCircleIcon className="h-5 w-5 text-blue-500" />
+                    <CardTitle>Constraints</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <pre className="whitespace-pre-wrap text-sm bg-muted p-3 rounded-md overflow-auto max-h-80">
-                      {executionResult.success ? executionResult.output : executionResult.error}
-                    </pre>
+                    <ul className="list-disc list-inside space-y-1.5 text-sm marker:text-muted-foreground">
+                      {selectedQuestion.constraints.map((constraint: string, index: number) => (
+                        <li key={index} className="text-muted-foreground">
+                          {constraint}
+                        </li>
+                      ))}
+                    </ul>
                   </CardContent>
                 </Card>
-              ) : (
-                <div className="h-full flex items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <PlayIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>Run your code to see the output here</p>
-                  </div>
-                </div>
               )}
             </div>
-          </TabsContent>
+          </div>
+          <ScrollBar />
+        </ScrollArea>
+      </ResizablePanel>
 
-          <TabsContent value="analysis" className="flex-1 mt-0">
-            <div className="p-3 h-full">
-              {!isPremium ? (
-                <Card className="h-full">
-                  <CardContent className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <LockIcon className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                      <h3 className="text-lg font-medium mb-2">Premium Feature</h3>
-                      <p className="text-muted-foreground mb-4">
-                        AI-powered code analysis and plagiarism detection is available for premium subscribers.
-                      </p>
-                      <Button onClick={() => window.open("/pricing", "_blank")}>
-                        <CrownIcon className="w-4 h-4 mr-2" />
-                        Upgrade to Premium
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : analysisResult ? (
-                <Card className="h-full">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      {analysisResult.isPlagiarized ? (
-                        <AlertTriangleIcon className="w-4 h-4 text-red-500" />
-                      ) : (
-                        <CheckCircleIcon className="w-4 h-4 text-green-500" />
-                      )}
-                      Analysis Results
-                      <Badge variant={analysisResult.isPlagiarized ? "destructive" : "default"} className="ml-auto">
-                        {analysisResult.confidence}% Confidence
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 overflow-auto max-h-80">
-                    {analysisResult.isPlagiarized && (
-                      <Alert variant="destructive">
-                        <AlertTriangleIcon className="h-4 w-4" />
-                        <AlertDescription>
-                          Potential plagiarism detected with {analysisResult.confidence}% confidence.
-                        </AlertDescription>
-                      </Alert>
-                    )}
+      <ResizableHandle withHandle />
 
-                    <div>
-                      <h4 className="font-medium mb-2">Analysis</h4>
-                      <p className="text-sm text-muted-foreground">{analysisResult.explanation}</p>
-                    </div>
+      {/* CODE EDITOR */}
+      <ResizablePanel defaultSize={50} minSize={30}>
+        <div className="h-full">
+          <Editor
+            height="100%"
+            defaultLanguage={language}
+            language={language}
+            theme="vs-dark"
+            value={code}
+            onChange={(value) => setCode(value || "")}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 18,
+              lineNumbers: "on",
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              padding: { top: 16, bottom: 16 },
+              wordWrap: "on",
+              wrappingIndent: "indent",
+            }}
+          />
+        </div>
+      </ResizablePanel>
 
-                    {analysisResult.sources.length > 0 && (
-                      <div>
-                        <h4 className="font-medium mb-2">Potential Sources</h4>
-                        <ul className="text-sm space-y-1">
-                          {analysisResult.sources.map((source, index) => (
-                            <li key={index} className="text-muted-foreground">
-                              • {source}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+      <ResizableHandle withHandle />
 
-                    {analysisResult.suggestions.length > 0 && (
-                      <div>
-                        <h4 className="font-medium mb-2">Suggestions</h4>
-                        <ul className="text-sm space-y-1">
-                          {analysisResult.suggestions.map((suggestion, index) => (
-                            <li key={index} className="text-muted-foreground">
-                              • {suggestion}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="h-full flex items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <BrainIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>Analyze your code to see AI insights here</p>
-                  </div>
+      {/* TABS SECTION */}
+      <ResizablePanel defaultSize={20} minSize={15}>
+        <div className="h-full flex flex-col">
+          <div className="flex items-center justify-between p-2 bg-muted/30">
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) => setActiveTab(value as "input" | "output" | "analysis")}
+              className="w-full"
+            >
+              <div className="flex items-center justify-between">
+                <TabsList>
+                  <TabsTrigger value="input">Input</TabsTrigger>
+                  <TabsTrigger value="output">Output</TabsTrigger>
+                  <TabsTrigger value="analysis">Analysis</TabsTrigger>
+                </TabsList>
+                <div className="flex items-center gap-2 mr-2">
+                  <Button onClick={handleRunCode} disabled={isExecuting} size="sm" variant="secondary">
+                    <PlayIcon className="h-4 w-4 mr-1" />
+                    {isExecuting ? "Running..." : "Run Code"}
+                  </Button>
+                  <Button onClick={handleSubmitCode} disabled={isAnalyzing} size="sm">
+                    <SendIcon className="h-4 w-4 mr-1" />
+                    {isAnalyzing ? "Analyzing..." : "Submit Solution"}
+                  </Button>
                 </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+              </div>
+
+              <div className="h-full">
+                <TabsContent value="input" className="h-full p-2">
+                  <Textarea
+                    placeholder="Enter input for your code here..."
+                    className="h-full font-mono text-sm"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                  />
+                </TabsContent>
+                <TabsContent value="output" className="h-full p-2">
+                  <ExecutionResult result={executionResult} isLoading={isExecuting} />
+                </TabsContent>
+                <TabsContent value="analysis" className="h-full p-2">
+                  <AnalysisResult result={analysisResult} isLoading={isAnalyzing} />
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
+        </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   )
 }
+
+export default CodeEditor

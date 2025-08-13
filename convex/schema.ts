@@ -10,18 +10,6 @@ export default defineSchema({
     clerkId: v.string(),
   }).index("by_clerk_id", ["clerkId"]),
 
-  subscriptions: defineTable({
-    userId: v.string(),
-    stripeCustomerId: v.string(),
-    stripeSubscriptionId: v.string(),
-    stripePriceId: v.string(),
-    status: v.string(), // active, canceled, past_due, etc.
-    currentPeriodStart: v.number(),
-    currentPeriodEnd: v.number(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  }).index("by_user_id", ["userId"]),
-
   interviews: defineTable({
     title: v.string(),
     description: v.optional(v.string()),
@@ -32,7 +20,7 @@ export default defineSchema({
       v.literal("live"),
       v.literal("completed"),
       v.literal("succeeded"),
-      v.literal("failed"),
+      v.literal("failed")
     ),
     streamCallId: v.string(),
     candidateId: v.string(),
@@ -82,7 +70,7 @@ export default defineSchema({
       v.literal("interview_scheduled"),
       v.literal("interview_result"),
       v.literal("interview_reminder"),
-      v.literal("system"),
+      v.literal("system")
     ),
     read: v.boolean(),
     link: v.optional(v.string()),

@@ -9,14 +9,6 @@ export const getAllQuestions = query({
   },
 })
 
-// Get questions for admin dashboard
-export const getQuestions = query({
-  handler: async (ctx) => {
-    const questions = await ctx.db.query("questions").collect()
-    return questions
-  },
-})
-
 // Get a specific question by ID
 export const getQuestionById = query({
   args: { id: v.id("questions") },
