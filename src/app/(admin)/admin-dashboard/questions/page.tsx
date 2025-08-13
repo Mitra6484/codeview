@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PlusIcon, EditIcon, TrashIcon } from "lucide-react";
-import { AddQuestionDialog } from "@/components/questions/AddQuestionDialog";
+import  AddQuestionDialog  from "@/components/questions/AddQuestionDialog";
 import { useState } from "react";
 import QuestionsList from "@/components/questions/QuestionsList";
 import { useUserRole } from "@/hooks/useUserRole";
