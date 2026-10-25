@@ -203,61 +203,68 @@ function InterviewScheduleUI() {
 
   return (
     <PageTransition>
-      <div className="container max-w-7xl mx-auto p-6 space-y-8">
+      <div className="container max-w-7xl mx-auto py-10 px-4 space-y-8">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between"
+          className="glass-card p-6 sm:p-8 rounded-3xl border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
         >
           {/* HEADER INFO */}
           <div>
-            <h1 className="text-3xl font-bold">Interviews</h1>
-            <p className="text-muted-foreground mt-1">Schedule and manage interviews</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-surface text-xs font-mono text-indigo-400 mb-2 border border-indigo-500/20">
+              <span>Calendar & Sessions</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Interview Sessions</h1>
+            <p className="text-sm text-slate-400 mt-1">Schedule live video sessions, assign interviewers, and manage appointments</p>
           </div>
 
           {/* DIALOG */}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="lg">Schedule Interview</Button>
+              <button className="glass-btn-primary px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white flex items-center gap-2 cursor-pointer shadow-lg shadow-indigo-500/25">
+                Schedule Interview
+              </button>
             </DialogTrigger>
 
-            <DialogContent className="sm:max-w-[500px] h-[calc(100vh-200px)] overflow-auto">
+            <DialogContent className="glass-card border border-white/15 rounded-3xl sm:max-w-[540px] max-h-[85vh] overflow-y-auto text-white">
               <DialogHeader>
-                <DialogTitle>{editingInterview ? "Edit Interview" : "Schedule Interview"}</DialogTitle>
+                <DialogTitle className="text-xl font-bold text-white">{editingInterview ? "Edit Interview Session" : "Schedule Interview Session"}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+              <div className="space-y-4 py-4 text-xs">
                 {/* INTERVIEW TITLE */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Title</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300">Session Title</label>
                   <Input
-                    placeholder="Interview title"
+                    placeholder="e.g. Senior Frontend Architecture Interview"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="glass-input rounded-xl bg-slate-900 border-white/10 text-white"
                   />
                 </div>
 
                 {/* INTERVIEW DESC */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Description</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300">Description</label>
                   <Textarea
-                    placeholder="Interview description"
+                    placeholder="Interview description & candidate notes..."
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
+                    className="glass-input rounded-xl bg-slate-900 border-white/10 text-white"
                   />
                 </div>
 
                 {/* CANDIDATE */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Candidate</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300">Candidate</label>
                   <Select
                     value={formData.candidateId}
                     onValueChange={(candidateId) => setFormData({ ...formData, candidateId })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="glass-input rounded-xl bg-slate-900 border-white/10 text-white">
                       <SelectValue placeholder="Select candidate" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-slate-950 border border-white/15 text-white">
                       {candidates.map((candidate) => (
                         <SelectItem key={candidate.clerkId} value={candidate.clerkId}>
                           <UserInfo user={candidate} />
@@ -268,21 +275,21 @@ function InterviewScheduleUI() {
                 </div>
 
                 {/* INTERVIEWERS */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Interviewers</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300">Interviewers</label>
                   <div className="flex flex-wrap gap-2 mb-2">
                     {selectedInterviewers.map((interviewer) => (
                       <div
                         key={interviewer.clerkId}
-                        className="inline-flex items-center gap-2 bg-secondary px-2 py-1 rounded-md text-sm"
+                        className="inline-flex items-center gap-2 glass-surface px-2.5 py-1 rounded-xl text-xs border border-white/10 text-slate-200"
                       >
                         <UserInfo user={interviewer} />
                         {interviewer.clerkId !== user?.id && (
                           <button
                             onClick={() => removeInterviewer(interviewer.clerkId)}
-                            className="hover:text-destructive transition-colors"
+                            className="hover:text-red-400 transition-colors ml-1"
                           >
-                            <XIcon className="h-4 w-4" />
+                            <XIcon className="h-3.5 w-3.5" />
                           </button>
                         )}
                       </div>
@@ -290,10 +297,10 @@ function InterviewScheduleUI() {
                   </div>
                   {availableInterviewers.length > 0 && (
                     <Select onValueChange={addInterviewer}>
-                      <SelectTrigger>
+                      <SelectTrigger className="glass-input rounded-xl bg-slate-900 border-white/10 text-white">
                         <SelectValue placeholder="Add interviewer" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-slate-950 border border-white/15 text-white">
                         {availableInterviewers.map((interviewer) => (
                           <SelectItem key={interviewer.clerkId} value={interviewer.clerkId}>
                             <UserInfo user={interviewer} />
@@ -305,31 +312,30 @@ function InterviewScheduleUI() {
                 </div>
 
                 {/* DATE & TIME */}
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                   {/* CALENDAR */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Date</label>
+                  <div className="space-y-1.5 flex-1">
+                    <label className="text-xs font-semibold text-slate-300">Date</label>
                     <Calendar
                       mode="single"
                       selected={formData.date}
                       onSelect={(date) => date && setFormData({ ...formData, date })}
                       disabled={(date) => date < new Date()}
-                      className="rounded-md border"
+                      className="rounded-2xl border border-white/10 glass-surface p-3"
                     />
                   </div>
 
                   {/* TIME */}
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Time</label>
+                  <div className="space-y-1.5 sm:w-36">
+                    <label className="text-xs font-semibold text-slate-300">Time</label>
                     <Select
                       value={formData.time}
                       onValueChange={(time) => setFormData({ ...formData, time })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="glass-input rounded-xl bg-slate-900 border-white/10 text-white">
                         <SelectValue placeholder="Select time" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-[180px]">
+                      <SelectContent className="max-h-[180px] bg-slate-950 border border-white/15 text-white">
                         {TIME_SLOTS.map((time) => (
                           <SelectItem key={time} value={time}>
                             {time}
@@ -341,31 +347,38 @@ function InterviewScheduleUI() {
                 </div>
 
                 {/* ACTION BUTTONS */}
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button variant="outline" onClick={() => {
-                    setOpen(false);
-                    setEditingInterview(null);
-                    setFormData({
-                      title: "",
-                      description: "",
-                      date: new Date(),
-                      time: "09:00",
-                      candidateId: "",
-                      interviewerIds: user?.id ? [user.id] : [],
-                    });
-                  }}>
+                <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                  <button
+                    className="glass-btn-secondary px-4 py-2 rounded-xl text-xs text-slate-300 hover:text-white cursor-pointer"
+                    onClick={() => {
+                      setOpen(false);
+                      setEditingInterview(null);
+                      setFormData({
+                        title: "",
+                        description: "",
+                        date: new Date(),
+                        time: "09:00",
+                        candidateId: "",
+                        interviewerIds: user?.id ? [user.id] : [],
+                      });
+                    }}
+                  >
                     Cancel
-                  </Button>
-                  <Button onClick={handleSubmit} disabled={isCreating}>
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isCreating}
+                    className="glass-btn-primary px-5 py-2 rounded-xl text-xs font-semibold text-white flex items-center gap-2 cursor-pointer shadow-lg shadow-indigo-500/25 disabled:opacity-50"
+                  >
                     {isCreating ? (
                       <>
-                        <Loader2Icon className="mr-2 size-4 animate-spin" />
+                        <Loader2Icon className="mr-1 size-3.5 animate-spin" />
                         {editingInterview ? "Updating..." : "Scheduling..."}
                       </>
                     ) : (
                       editingInterview ? "Update Interview" : "Schedule Interview"
                     )}
-                  </Button>
+                  </button>
                 </div>
               </div>
             </DialogContent>

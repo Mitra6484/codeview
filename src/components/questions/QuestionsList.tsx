@@ -56,32 +56,32 @@ export default function QuestionsList({ questions }: QuestionsListProps) {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {questions.map((question) => (
-          <Card key={question._id} className="hover:shadow-md transition-all">
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg">{question.title}</CardTitle>
-              <CardDescription className="line-clamp-2">{question.description}</CardDescription>
+          <Card key={question._id} className="glass-card border border-white/10 rounded-2xl hover:border-white/20 transition-all shadow-lg overflow-hidden flex flex-col justify-between">
+            <CardHeader className="p-5 pb-3">
+              <CardTitle className="text-lg font-bold text-white tracking-tight">{question.title}</CardTitle>
+              <CardDescription className="line-clamp-2 text-xs text-slate-400 mt-1">{question.description}</CardDescription>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="flex flex-wrap gap-2 mb-3">
+            <CardContent className="p-5 pt-0">
+              <div className="flex flex-wrap gap-1.5 mb-3">
                 {question.supportedLanguages.map((lang) => (
-                  <Badge key={lang} variant="outline">
+                  <Badge key={lang} variant="outline" className="glass-surface text-[10px] text-indigo-300 border-indigo-500/25 px-2 py-0.5 font-mono">
                     {lang}
                   </Badge>
                 ))}
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-slate-400 font-mono">
                 {question.examples.length} example{question.examples.length !== 1 ? "s" : ""}
               </p>
             </CardContent>
-            <CardFooter className="p-4 pt-0 flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => setQuestionToEdit(question)}>
-                <EditIcon className="h-4 w-4 mr-1" />
+            <CardFooter className="p-5 pt-3 border-t border-white/5 flex justify-end gap-2 bg-white/[0.02]">
+              <Button variant="outline" size="sm" className="glass-btn-secondary text-xs rounded-xl h-8 text-slate-200" onClick={() => setQuestionToEdit(question)}>
+                <EditIcon className="h-3.5 w-3.5 mr-1" />
                 Edit
               </Button>
-              <Button variant="destructive" size="sm" onClick={() => setQuestionToDelete(question._id)}>
-                <TrashIcon className="h-4 w-4 mr-1" />
+              <Button variant="destructive" size="sm" className="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-xs rounded-xl h-8" onClick={() => setQuestionToDelete(question._id)}>
+                <TrashIcon className="h-3.5 w-3.5 mr-1" />
                 Delete
               </Button>
             </CardFooter>

@@ -32,48 +32,59 @@ function RecordingCard({ recording }: { recording: CallRecording }) {
       : "Unknown duration";
 
   return (
-    <Card className="group hover:shadow-md transition-all">
+    <div className="glass-card rounded-2xl border border-white/10 hover:border-indigo-500/30 transition-all duration-300 shadow-xl overflow-hidden flex flex-col justify-between group">
       {/* CARD HEADER */}
-      <CardHeader className="space-y-1">
-        <div className="space-y-2">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center text-sm text-muted-foreground gap-2">
-              <CalendarIcon className="h-3.5 w-3.5" />
-              <span>{formattedStartTime}</span>
-            </div>
-            <div className="flex items-center text-sm text-muted-foreground gap-2">
-              <ClockIcon className="h-3.5 w-3.5" />
-              <span>{duration}</span>
-            </div>
+      <div className="p-5 pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center text-xs font-mono text-slate-300 gap-2">
+            <CalendarIcon className="h-3.5 w-3.5 text-indigo-400" />
+            <span>{formattedStartTime}</span>
+          </div>
+          <div className="flex items-center text-xs font-mono text-indigo-300 gap-1.5 px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+            <ClockIcon className="h-3 w-3" />
+            <span>{duration}</span>
           </div>
         </div>
-      </CardHeader>
+      </div>
 
-      {/* CARD CONTENT */}
-      <CardContent>
+      {/* CARD CONTENT - VIDEO PREVIEW */}
+      <div className="px-5">
         <div
-          className="w-full aspect-video bg-muted/50 rounded-lg flex items-center justify-center cursor-pointer group"
+          className="w-full aspect-video rounded-xl relative overflow-hidden bg-gradient-to-tr from-slate-950 via-slate-900 to-indigo-950/40 border border-white/10 flex items-center justify-center cursor-pointer group/thumb"
           onClick={() => window.open(recording.url, "_blank")}
         >
-          <div className="size-12 rounded-full bg-background/90 flex items-center justify-center group-hover:bg-primary transition-colors">
-            <PlayIcon className="size-6 text-muted-foreground group-hover:text-primary-foreground transition-colors" />
+          {/* Subtle grid backdrop */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent pointer-events-none" />
+          
+          <div className="size-12 rounded-full glass-surface border border-white/20 flex items-center justify-center group-hover/thumb:scale-110 group-hover/thumb:bg-indigo-600 group-hover/thumb:border-indigo-400 transition-all shadow-lg text-white">
+            <PlayIcon className="size-5 fill-white ml-0.5" />
           </div>
         </div>
-      </CardContent>
-      <CardFooter className="gap-2">
-        <Button className="flex-1" onClick={() => window.open(recording.url, "_blank")}>
-          <PlayIcon className="size-4 mr-2" />
-          Play Recording
-        </Button>
-        <Button variant="secondary" onClick={handleCopyLink} disabled={isCopying}>
+      </div>
+
+      {/* CARD FOOTER */}
+      <div className="p-5 pt-4 flex gap-2">
+        <button
+          className="flex-1 glass-btn-primary py-2.5 px-4 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-500/20"
+          onClick={() => window.open(recording.url, "_blank")}
+        >
+          <PlayIcon className="size-3.5 fill-white" />
+          <span>Play Recording</span>
+        </button>
+        <button
+          className="glass-btn-secondary p-2.5 rounded-xl text-slate-300 hover:text-white cursor-pointer border border-white/10"
+          onClick={handleCopyLink}
+          disabled={isCopying}
+          title="Copy Link"
+        >
           {isCopying ? (
-            <Loader2Icon className="size-4 animate-spin" />
+            <Loader2Icon className="size-4 animate-spin text-indigo-400" />
           ) : (
             <CopyIcon className="size-4" />
           )}
-        </Button>
-      </CardFooter>
-    </Card>
+        </button>
+      </div>
+    </div>
   );
 }
 export default RecordingCard;

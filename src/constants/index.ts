@@ -45,6 +45,20 @@ export const TIME_SLOTS = [
 export const QUICK_ACTIONS = [
   {
     icon: Code2,
+    title: "AI Mock Interview",
+    description: "Voice practice with gentle AI",
+    color: "purple-500",
+    gradient: "from-indigo-500/15 via-purple-500/10 to-transparent",
+  },
+  {
+    icon: Code2,
+    title: "System Design",
+    description: "Architecture canvas & AI critic",
+    color: "emerald-500",
+    gradient: "from-emerald-500/15 via-teal-500/10 to-transparent",
+  },
+  {
+    icon: Code2,
     title: "New Call",
     description: "Start an instant call",
     color: "primary",
@@ -70,7 +84,6 @@ export const QUICK_ACTIONS = [
     description: "Access past interviews",
     color: "blue-700",
     gradient: "from-blue-700/10 via-blue-500/5 to-blue-900/10",
-
   },
 ];
 

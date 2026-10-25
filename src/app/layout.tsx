@@ -41,12 +41,12 @@ export default function RootLayout({
         >
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="dark"
             enableSystem
             disableTransitionOnChange
           >
             <SignedIn>
-              <div className="min-h-screen">
+              <div className="min-h-screen glass-canvas">
                 <Navbar/>
                 <main className="px-4 sm:px-6 lg:px-8">
                   <PageTransition>
@@ -57,7 +57,9 @@ export default function RootLayout({
             </SignedIn>
             
             <SignedOut>
-              <RedirectToSignIn/>
+              <div className="min-h-screen glass-canvas">
+                {children}
+              </div>
             </SignedOut>
           </ThemeProvider>
           <Toaster/>

@@ -30,9 +30,10 @@ interface Example {
 
 interface CodeEditorProps {
   onAnalysisResult?: (result: CodeAnalysisResult) => void
+  onCodeChange?: (code: string, language: string, questionTitle: string, questionDescription: string) => void
 }
 
-function CodeEditor({ onAnalysisResult }: CodeEditorProps) {
+function CodeEditor({ onAnalysisResult, onCodeChange }: CodeEditorProps) {
   const questions = useQuery(api.questions.getAllQuestions)
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null)
   const [language, setLanguage] = useState<"javascript" | "python" | "java">(LANGUAGES[0].id)
@@ -57,6 +58,12 @@ function CodeEditor({ onAnalysisResult }: CodeEditorProps) {
       setCode(selectedQuestion.starterCode[language])
     }
   }, [selectedQuestion, language])
+
+  useEffect(() => {
+    if (onCodeChange && selectedQuestion && code) {
+      onCodeChange(code, language, selectedQuestion.title, selectedQuestion.description)
+    }
+  }, [code, language, selectedQuestion, onCodeChange])
 
   const handleQuestionChange = (questionId: string) => {
     setSelectedQuestionId(questionId)
