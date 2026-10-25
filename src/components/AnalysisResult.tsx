@@ -8,9 +8,10 @@ import { ScrollArea } from "./ui/scroll-area"
 interface AnalysisResultProps {
   result: CodeAnalysisResult | null
   isLoading: boolean
+  isInterviewer?: boolean
 }
 
-export function AnalysisResult({ result, isLoading }: AnalysisResultProps) {
+export function AnalysisResult({ result, isLoading, isInterviewer = true }: AnalysisResultProps) {
   if (isLoading) {
     return (
       <Card className="mt-4">
@@ -40,27 +41,38 @@ export function AnalysisResult({ result, isLoading }: AnalysisResultProps) {
       <ScrollArea className="h-[300px]">
         <CardHeader className="py-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">AI Analysis Result</CardTitle>
-            <Badge variant={result.isPlagiarized ? "destructive" : "default"} className="flex items-center gap-1">
-              {result.isPlagiarized ? (
-                <>
-                  <AlertCircleIcon className="h-3 w-3" />
-                  Potential Plagiarism
-                </>
-              ) : (
-                <>
-                  <CheckCircleIcon className="h-3 w-3" />
-                  Original Work
-                </>
-              )}
-            </Badge>
+            <CardTitle className="text-sm font-medium">
+              {isInterviewer ? "AI Code Integrity Analysis" : "Code Evaluation Summary"}
+            </CardTitle>
+            {isInterviewer ? (
+              <Badge variant={result.isPlagiarized ? "destructive" : "default"} className="flex items-center gap-1">
+                {result.isPlagiarized ? (
+                  <>
+                    <AlertCircleIcon className="h-3 w-3" />
+                    Potential Plagiarism
+                  </>
+                ) : (
+                  <>
+                    <CheckCircleIcon className="h-3 w-3" />
+                    Original Work
+                  </>
+                )}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="flex items-center gap-1 text-emerald-300 border-emerald-500/30 bg-emerald-500/10">
+                <CheckCircleIcon className="h-3 w-3" />
+                Submission Recorded
+              </Badge>
+            )}
           </div>
-          <CardDescription>
-            Confidence:
-            <Badge variant={getConfidenceBadge(result.confidence)} className="ml-2">
-              {result.confidence}%
-            </Badge>
-          </CardDescription>
+          {isInterviewer && (
+            <CardDescription>
+              Integrity Confidence:
+              <Badge variant={getConfidenceBadge(result.confidence)} className="ml-2">
+                {result.confidence}%
+              </Badge>
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent className="py-2">
           <div className="space-y-4 pr-4">

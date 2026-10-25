@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useQuery } from "convex/react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
@@ -20,6 +20,11 @@ import { analyzeCode, type CodeAnalysisResult } from "../actions/analyze-code"
 import { ExecutionResult } from "./ExecutionResult"
 import { AnalysisResult } from "./AnalysisResult"
 
+import { Lock, Shield, Sparkles } from "lucide-react"
+import toast from "react-hot-toast"
+import { Badge } from "./ui/badge"
+import { useUserRole } from "@/hooks/useUserRole"
+
 type Question = Doc<"questions">
 
 interface Example {
@@ -31,9 +36,13 @@ interface Example {
 interface CodeEditorProps {
   onAnalysisResult?: (result: CodeAnalysisResult) => void
   onCodeChange?: (code: string, language: string, questionTitle: string, questionDescription: string) => void
+  isInterviewer?: boolean
+  call?: any
 }
 
-function CodeEditor({ onAnalysisResult, onCodeChange }: CodeEditorProps) {
+function CodeEditor({ onAnalysisResult, onCodeChange, isInterviewer: propIsInterviewer, call }: CodeEditorProps) {
+  const { isInterviewer: hookIsInterviewer } = useUserRole()
+  const isInterviewer = propIsInterviewer !== undefined ? propIsInterviewer : hookIsInterviewer
   const questions = useQuery(api.questions.getAllQuestions)
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null)
   const [language, setLanguage] = useState<"javascript" | "python" | "java">(LANGUAGES[0].id)
@@ -45,7 +54,57 @@ function CodeEditor({ onAnalysisResult, onCodeChange }: CodeEditorProps) {
   const [executionResult, setExecutionResult] = useState<ExecuteCodeResult | null>(null)
   const [analysisResult, setAnalysisResult] = useState<CodeAnalysisResult | null>(null)
 
+  // Real-time collaborative sync refs
+  const isRemoteUpdateRef = useRef(false)
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [candidateReceivedHint, setCandidateReceivedHint] = useState<{ hint: string; level: number } | null>(null)
+
   const selectedQuestion = selectedQuestionId ? questions?.find((q: Question) => q._id === selectedQuestionId) : questions?.[0]
+
+  // Listen for question change, code sync, and hint events across participants
+  useEffect(() => {
+    if (!call) return
+
+    const handleCustomEvents = (event: any) => {
+      if (event.type === "question-changed" && event.data?.questionId && !isInterviewer) {
+        isRemoteUpdateRef.current = true
+        setSelectedQuestionId(event.data.questionId)
+        const q = questions?.find((x: Question) => x._id === event.data.questionId)
+        if (q && q.starterCode[language]) {
+          setCode(q.starterCode[language])
+        }
+        setTimeout(() => {
+          isRemoteUpdateRef.current = false
+        }, 150)
+        toast(`Interviewer assigned problem: ${q?.title || "New Question"}`)
+      } else if (event.type === "code-sync" && event.data) {
+        isRemoteUpdateRef.current = true
+        if (event.data.code !== undefined) {
+          setCode(event.data.code)
+        }
+        if (event.data.language && event.data.language !== language) {
+          setLanguage(event.data.language)
+        }
+        setTimeout(() => {
+          isRemoteUpdateRef.current = false
+        }, 150)
+      } else if (event.type === "interviewer-sent-hint" && event.data && !isInterviewer) {
+        setCandidateReceivedHint({
+          hint: event.data.hint,
+          level: event.data.level || 1,
+        })
+        toast("💡 You received a hint from the interviewer!", {
+          icon: "💡",
+          duration: 8000,
+        })
+      }
+    }
+
+    call.on("custom", handleCustomEvents)
+    return () => {
+      call.off("custom", handleCustomEvents)
+    }
+  }, [call, isInterviewer, questions, language])
 
   useEffect(() => {
     if (questions && questions.length > 0 && !selectedQuestionId) {
@@ -71,12 +130,53 @@ function CodeEditor({ onAnalysisResult, onCodeChange }: CodeEditorProps) {
     if (question && question.starterCode[language]) {
       setCode(question.starterCode[language])
     }
+    if (call) {
+      call.sendCustomEvent({
+        type: "question-changed",
+        data: { questionId },
+      })
+      toast.success(`Assigned "${question?.title || "problem"}" to candidate`)
+    }
+  }
+
+  const handleRequestHint = () => {
+    if (call) {
+      call.sendCustomEvent({
+        type: "candidate-hint-request",
+        data: { timestamp: new Date().toISOString() },
+      })
+    }
+    toast.success("Hint request sent to interviewer! Aura is on standby.", {
+      icon: "💡",
+    })
   }
 
   const handleLanguageChange = (newLanguage: "javascript" | "python" | "java") => {
     if (selectedQuestion && selectedQuestion.supportedLanguages.includes(newLanguage)) {
       setLanguage(newLanguage)
-      setCode(selectedQuestion.starterCode[newLanguage] || "")
+      const newCode = selectedQuestion.starterCode[newLanguage] || ""
+      setCode(newCode)
+      if (call) {
+        call.sendCustomEvent({
+          type: "code-sync",
+          data: { code: newCode, language: newLanguage },
+        })
+      }
+    }
+  }
+
+  const handleEditorChange = (value: string | undefined) => {
+    const newCode = value || ""
+    setCode(newCode)
+
+    if (call && !isRemoteUpdateRef.current) {
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current)
+      syncTimeoutRef.current = setTimeout(() => {
+        call.sendCustomEvent({
+          type: "code-sync",
+          data: { code: newCode, language },
+        })
+      }, 300)
     }
   }
 
@@ -124,6 +224,17 @@ function CodeEditor({ onAnalysisResult, onCodeChange }: CodeEditorProps) {
       if (onAnalysisResult) {
         onAnalysisResult(result)
       }
+
+      if (call) {
+        call.sendCustomEvent({
+          type: "candidate-submitted-solution",
+          data: { code, language, title: selectedQuestion.title },
+        })
+      }
+
+      if (!isInterviewer) {
+        toast.success("Solution submitted to interviewer for evaluation!")
+      }
     } catch (error) {
       console.error("Failed to analyze code:", error)
       setAnalysisResult({
@@ -166,18 +277,32 @@ function CodeEditor({ onAnalysisResult, onCodeChange }: CodeEditorProps) {
                   <p className="text-sm text-muted-foreground">Choose your language and solve the problem</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Select value={selectedQuestionId || ""} onValueChange={handleQuestionChange}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select question" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {questions.map((q: Question) => (
-                        <SelectItem key={q._id} value={q._id}>
-                          {q.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {isInterviewer ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono hidden md:inline-flex items-center gap-1">
+                        <Shield className="w-2.5 h-2.5" />
+                        Interviewer Controller
+                      </span>
+                      <Select value={selectedQuestionId || ""} onValueChange={handleQuestionChange}>
+                        <SelectTrigger className="w-[180px] glass-surface border-white/10">
+                          <SelectValue placeholder="Select question" />
+                        </SelectTrigger>
+                        <SelectContent className="glass-card border-white/10">
+                          {questions.map((q: Question) => (
+                            <SelectItem key={q._id} value={q._id}>
+                              {q.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-slate-300">
+                      <Lock className="w-3.5 h-3.5 text-indigo-400" />
+                      <span className="text-slate-400">Assigned:</span>
+                      <span className="font-semibold text-white truncate max-w-[140px]">{selectedQuestion.title}</span>
+                    </div>
+                  )}
 
                   <Select value={language} onValueChange={handleLanguageChange}>
                     <SelectTrigger className="w-[150px]">
@@ -273,25 +398,58 @@ function CodeEditor({ onAnalysisResult, onCodeChange }: CodeEditorProps) {
 
       {/* CODE EDITOR */}
       <ResizablePanel defaultSize={50} minSize={30}>
-        <div className="h-full">
-          <Editor
-            height="100%"
-            defaultLanguage={language}
-            language={language}
-            theme="vs-dark"
-            value={code}
-            onChange={(value) => setCode(value || "")}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 18,
-              lineNumbers: "on",
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              padding: { top: 16, bottom: 16 },
-              wordWrap: "on",
-              wrappingIndent: "indent",
-            }}
-          />
+        <div className="h-full flex flex-col">
+          {/* CANDIDATE RECEIVED HINT BANNER */}
+          {!isInterviewer && candidateReceivedHint && (
+            <div className="mx-4 my-2 p-3 rounded-2xl glass-card border border-amber-500/40 bg-gradient-to-r from-amber-950/70 via-slate-900/90 to-slate-950/90 shadow-2xl flex items-start justify-between gap-3 animate-in slide-in-from-top-2 z-20 shrink-0">
+              <div className="flex items-start gap-2.5">
+                <div className="p-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0 mt-0.5">
+                  <LightbulbIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                      Hint from Interviewer • Level {candidateReceivedHint.level}
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono">
+                      Socratic Assistance
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-100 font-mono leading-relaxed mt-1">
+                    "{candidateReceivedHint.hint}"
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCandidateReceivedHint(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 text-xs cursor-pointer"
+                title="Dismiss hint"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          <div className="flex-1">
+            <Editor
+              height="100%"
+              defaultLanguage={language}
+              language={language}
+              theme="vs-dark"
+              value={code}
+              onChange={handleEditorChange}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 18,
+                lineNumbers: "on",
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                padding: { top: 16, bottom: 16 },
+                wordWrap: "on",
+                wrappingIndent: "indent",
+              }}
+            />
+          </div>
         </div>
       </ResizablePanel>
 
@@ -313,11 +471,24 @@ function CodeEditor({ onAnalysisResult, onCodeChange }: CodeEditorProps) {
                   <TabsTrigger value="analysis">Analysis</TabsTrigger>
                 </TabsList>
                 <div className="flex items-center gap-2 mr-2">
-                  <Button onClick={handleRunCode} disabled={isExecuting} size="sm" variant="secondary">
+                  {!isInterviewer && (
+                    <Button
+                      onClick={handleRequestHint}
+                      size="sm"
+                      variant="outline"
+                      className="glass-btn-secondary text-amber-300 border-amber-500/30 hover:bg-amber-500/10 cursor-pointer text-xs"
+                      title="Request a gentle hint or clarification from your interviewer"
+                    >
+                      <LightbulbIcon className="h-3.5 w-3.5 mr-1 text-amber-400" />
+                      Request Hint
+                    </Button>
+                  )}
+
+                  <Button onClick={handleRunCode} disabled={isExecuting} size="sm" variant="secondary" className="cursor-pointer">
                     <PlayIcon className="h-4 w-4 mr-1" />
                     {isExecuting ? "Running..." : "Run Code"}
                   </Button>
-                  <Button onClick={handleSubmitCode} disabled={isAnalyzing} size="sm">
+                  <Button onClick={handleSubmitCode} disabled={isAnalyzing} size="sm" className="glass-btn-primary cursor-pointer">
                     <SendIcon className="h-4 w-4 mr-1" />
                     {isAnalyzing ? "Analyzing..." : "Submit Solution"}
                   </Button>
@@ -337,7 +508,7 @@ function CodeEditor({ onAnalysisResult, onCodeChange }: CodeEditorProps) {
                   <ExecutionResult result={executionResult} isLoading={isExecuting} />
                 </TabsContent>
                 <TabsContent value="analysis" className="h-full p-2">
-                  <AnalysisResult result={analysisResult} isLoading={isAnalyzing} />
+                  <AnalysisResult result={analysisResult} isLoading={isAnalyzing} isInterviewer={isInterviewer} />
                 </TabsContent>
               </div>
             </Tabs>

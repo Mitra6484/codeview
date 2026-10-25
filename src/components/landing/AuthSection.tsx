@@ -44,7 +44,7 @@ export default function AuthSection() {
                   <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
                     <Check className="w-3 h-3 stroke-[3]" />
                   </div>
-                  <span>Real-Time Gemini AI Insights</span>
+                  <span>Autonomous Multi-Agent Insights</span>
                 </div>
                 <div className="flex items-center gap-2.5 glass-surface px-3.5 py-2.5 rounded-xl border border-white/5">
                   <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
@@ -74,10 +74,50 @@ export default function AuthSection() {
               {/* Action Buttons */}
               <div className="space-y-3">
                 <SignUpButton mode="modal">
-                  <button className="w-full glass-btn-primary py-3.5 px-5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 cursor-pointer group shadow-lg shadow-indigo-500/25">
-                    <UserPlus className="w-4 h-4 text-indigo-200" />
-                    <span>Create Free Account</span>
-                    <ArrowRight className="w-4 h-4 text-white/70 group-hover:translate-x-1 transition-transform ml-1" />
+                  <button
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("codeview_signup_role", "interviewer");
+                        localStorage.setItem("codeview_test_role", "interviewer");
+                        window.dispatchEvent(new Event("codeview_role_changed"));
+                      }
+                    }}
+                    className="w-full glass-btn-primary py-3 px-4 rounded-xl text-sm font-semibold text-white flex items-center justify-between cursor-pointer group shadow-lg shadow-indigo-500/25"
+                  >
+                    <div className="flex items-center gap-2.5 text-left">
+                      <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                        <ShieldCheck className="w-4 h-4 text-indigo-300" />
+                      </div>
+                      <div>
+                        <div className="text-white font-semibold text-xs sm:text-sm">Sign Up as Interviewer</div>
+                        <div className="text-[10px] text-indigo-200/70 font-normal">Conduct rounds, Dashboard & Copilot</div>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-white/70 group-hover:translate-x-1 transition-transform ml-1 shrink-0" />
+                  </button>
+                </SignUpButton>
+
+                <SignUpButton mode="modal">
+                  <button
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("codeview_signup_role", "candidate");
+                        localStorage.setItem("codeview_test_role", "candidate");
+                        window.dispatchEvent(new Event("codeview_role_changed"));
+                      }
+                    }}
+                    className="w-full glass-btn-secondary py-3 px-4 rounded-xl text-sm font-medium text-slate-200 hover:text-white flex items-center justify-between cursor-pointer group transition-all"
+                  >
+                    <div className="flex items-center gap-2.5 text-left">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                        <UserPlus className="w-4 h-4 text-slate-400" />
+                      </div>
+                      <div>
+                        <div className="text-white font-medium text-xs sm:text-sm">Sign Up as Candidate</div>
+                        <div className="text-[10px] text-slate-400 font-normal">Practice with Aura AI & Take rounds</div>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-slate-500 group-hover:translate-x-1 transition-transform ml-1 shrink-0" />
                   </button>
                 </SignUpButton>
 
@@ -91,7 +131,7 @@ export default function AuthSection() {
                 </div>
 
                 <SignInButton mode="modal">
-                  <button className="w-full glass-btn-secondary py-3.5 px-5 rounded-xl text-sm font-medium text-slate-200 hover:text-white flex items-center justify-center gap-2 cursor-pointer transition-all">
+                  <button className="w-full glass-btn-secondary py-3 px-5 rounded-xl text-xs sm:text-sm font-medium text-slate-300 hover:text-white flex items-center justify-center gap-2 cursor-pointer transition-all">
                     <LogIn className="w-4 h-4 text-slate-400" />
                     <span>Sign In to Workspace</span>
                   </button>

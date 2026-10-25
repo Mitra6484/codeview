@@ -19,8 +19,15 @@ import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import toast from "react-hot-toast"
 
-// Sound effect for new notifications
-const notificationSound = new Audio("/notification.mp3")
+// Sound effect helper for new notifications (browser-safe)
+const playNotificationSound = () => {
+  if (typeof window !== "undefined") {
+    try {
+      const audio = new Audio("/notification.mp3");
+      audio.play().catch(() => {});
+    } catch {}
+  }
+};
 
 export function NotificationBell() {
   const { user } = useUser()
@@ -91,7 +98,7 @@ export function NotificationBell() {
         lastNotificationRef.current = latestNotification._id
         if (!latestNotification.read) {
           // Play sound
-          notificationSound.play().catch(() => {})
+          playNotificationSound();
           
           // Show toast with different styling based on notification type
           toast(latestNotification.message, {
@@ -153,18 +160,16 @@ export function NotificationBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h4 className="font-semibold">Notifications</h4>
+      <PopoverContent className="w-80 p-0 rounded-2xl border border-white/15 bg-slate-950/95 backdrop-blur-2xl shadow-2xl overflow-hidden text-white" align="end">
+        <div className="flex items-center justify-between p-3.5 border-b border-white/10 bg-slate-900/40">
+          <h4 className="text-xs font-bold text-white">Notifications</h4>
           {unreadCount && unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={handleMarkAllAsRead}
-              className="text-xs"
+              className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium transition-colors cursor-pointer"
             >
               Mark all as read
-            </Button>
+            </button>
           )}
         </div>
         <ScrollArea className="h-[300px]">

@@ -84,7 +84,7 @@ export default function AiQuestionGeneratorModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-      <div className="glass-card max-w-3xl w-full rounded-3xl p-6 sm:p-8 border border-white/15 relative space-y-6 shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="glass-modal max-w-3xl w-full rounded-3xl p-6 sm:p-8 border border-white/15 relative space-y-6 shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* HEADER */}
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <div className="flex items-center gap-3">
@@ -92,8 +92,8 @@ export default function AiQuestionGeneratorModal({
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">AI Question Generator</h2>
-              <p className="text-xs text-slate-400">Generate high-signal challenges with test suites in seconds</p>
+              <h2 className="text-xl font-bold text-white tracking-tight">Genesis Challenge Studio</h2>
+              <p className="text-xs text-slate-400">Autonomous interview problem synthesis with runnable test suites</p>
             </div>
           </div>
           <button
@@ -213,7 +213,7 @@ export default function AiQuestionGeneratorModal({
 
         {/* MODAL FOOTER */}
         <div className="flex items-center justify-between pt-2 border-t border-white/10">
-          <span className="text-[10px] text-slate-500">Free OpenRouter Qwen-2.5-Coder Engine</span>
+          <span className="text-[10px] text-slate-500">Synthesized by Genesis Agent • OpenRouter Free Engine</span>
           <div className="flex gap-2">
             <button
               onClick={onClose}

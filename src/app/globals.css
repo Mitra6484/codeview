@@ -12,34 +12,7 @@
 
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 262.1 83.3% 57.8%;
-    --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-  }
-
+  :root,
   .dark {
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
@@ -60,11 +33,13 @@
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
     --ring: 263.4 70% 50.4%;
+    --radius: 0.5rem;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    color-scheme: dark;
   }
 }
 
@@ -81,37 +56,42 @@
 }
 
 /* ==========================================================
-   GLASSMORPHISM DESIGN SYSTEM
+   APPLE LIQUID GLASSMORPHISM DESIGN SYSTEM
    ========================================================== */
 @layer components {
-  /* Ambient canvas background glow */
+  /* Ambient cosmic obsidian canvas background */
   .glass-canvas {
     position: relative;
     overflow: hidden;
-    background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 15% 60%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
-                #030712;
+    background: radial-gradient(circle at 50% -10%, rgba(99, 102, 241, 0.16) 0%, transparent 45%),
+                radial-gradient(circle at 85% 25%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 15% 45%, rgba(6, 182, 212, 0.10) 0%, transparent 40%),
+                radial-gradient(circle at 75% 75%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
+                #05070f;
   }
 
-  /* Frosted Glass Surface */
+  /* Apple-Style Transparent Frosted Glass Surface */
   .glass-surface {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    background: rgba(255, 255, 255, 0.035);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.14),
+                inset 0 0 20px 0 rgba(255, 255, 255, 0.01),
+                0 12px 36px 0 rgba(0, 0, 0, 0.45);
   }
 
-  /* Glass Card with Top Specular Reflection & Hover Bloom */
+  /* Apple VisionOS-Style Glass Card with Top Specular Reflection & Hover Bloom */
   .glass-card {
     position: relative;
-    background: rgba(255, 255, 255, 0.035);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(30px) saturate(190%);
+    -webkit-backdrop-filter: blur(30px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.18),
+                inset 0 0 20px 0 rgba(255, 255, 255, 0.015),
+                0 20px 50px -12px rgba(0, 0, 0, 0.6);
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .glass-card::before {
@@ -122,8 +102,8 @@
     padding: 1px;
     background: linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.18) 0%,
-      rgba(255, 255, 255, 0.04) 40%,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.06) 35%,
       rgba(255, 255, 255, 0.01) 100%
     );
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -133,75 +113,117 @@
   }
 
   .glass-card:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.18);
-    transform: translateY(-2px);
-    box-shadow: 0 20px 48px -10px rgba(99, 102, 241, 0.18),
-                0 0 24px 0 rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.065);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 0.28),
+                0 24px 60px -12px rgba(99, 102, 241, 0.22),
+                0 0 30px 0 rgba(255, 255, 255, 0.05);
   }
 
-  /* Sticky Frosted Navigation */
+  /* Optional interactive card lift for marketing cards */
+  .glass-card-interactive {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .glass-card-interactive:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Apple-Style Frosted Modal Dialog (Completely stationary, no hover shift) */
+  .glass-modal {
+    position: relative;
+    background: rgba(8, 10, 20, 0.94);
+    backdrop-filter: blur(32px) saturate(190%);
+    -webkit-backdrop-filter: blur(32px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.22),
+                0 25px 70px -15px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Sticky Frosted Navigation (Apple translucent bar) */
   .glass-nav {
-    background: rgba(3, 7, 18, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(5, 7, 15, 0.65);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
   }
 
   /* Frosted Glass Pill Badge */
   .glass-pill {
     background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.2), 0 4px 20px rgba(0, 0, 0, 0.25);
   }
 
-  /* Primary Glowing Glass Button */
+  /* Primary Apple Glowing Glass Button */
   .glass-btn-primary {
     position: relative;
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.75) 0%, rgba(139, 92, 246, 0.75) 100%);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.24);
-    box-shadow: 0 0 24px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    transition: all 0.25s ease;
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.9) 0%, rgba(79, 70, 229, 0.85) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.45),
+                0 8px 24px -4px rgba(99, 102, 241, 0.45);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .glass-btn-primary:hover {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%);
-    box-shadow: 0 0 32px rgba(99, 102, 241, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    background: linear-gradient(180deg, rgba(129, 140, 248, 0.95) 0%, rgba(99, 102, 241, 0.9) 100%);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+                0 12px 32px -4px rgba(99, 102, 241, 0.65);
     transform: translateY(-1px);
   }
 
-  /* Secondary Translucent Glass Button */
+  /* Secondary Translucent Apple Liquid Glass Button */
   .glass-btn-secondary {
     background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    transition: all 0.25s ease;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.16),
+                0 6px 20px rgba(0, 0, 0, 0.25);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .glass-btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.09);
     border-color: rgba(255, 255, 255, 0.24);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.24),
+                0 8px 24px rgba(0, 0, 0, 0.35);
     transform: translateY(-1px);
   }
 
   /* Glass Input */
   .glass-input {
-    background: rgba(0, 0, 0, 0.25);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.4);
     transition: all 0.2s ease;
   }
 
   .glass-input:focus {
-    border-color: rgba(99, 102, 241, 0.6);
-    box-shadow: 0 0 16px rgba(99, 102, 241, 0.25);
+    border-color: rgba(99, 102, 241, 0.7);
+    box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(99, 102, 241, 0.3);
+  }
+
+  /* Live traffic streaming animation for canvas */
+  @keyframes simLineFlow {
+    from {
+      stroke-dashoffset: 24;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .sim-traffic-flowing {
+    animation: simLineFlow 0.6s linear infinite;
   }
 }
+

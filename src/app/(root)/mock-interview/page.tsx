@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Editor from "@monaco-editor/react";
 import {
@@ -26,7 +26,12 @@ import {
 } from "lucide-react";
 import { CODING_QUESTIONS, LANGUAGES } from "@/constants";
 import { useVoiceInterview } from "@/hooks/useVoiceInterview";
-import { processVoiceInterviewTurn, VoiceTurnResponse } from "@/actions/ai/voice-mock-agent";
+import {
+  processVoiceInterviewTurn,
+  evaluateMockInterviewSession,
+  VoiceTurnResponse,
+  MockSessionEvaluationResponse,
+} from "@/actions/ai/voice-mock-agent";
 import { executeCode, ExecuteCodeResult } from "@/actions/execute-code";
 import LoaderUI from "@/components/LoaderUI";
 
@@ -47,9 +52,12 @@ export default function MockInterviewPage() {
   // Interview Session State
   const [sessionTime, setSessionTime] = useState<number>(0);
   const [isAiProcessing, setIsAiProcessing] = useState<boolean>(false);
+  const [isEvaluatingScorecard, setIsEvaluatingScorecard] = useState<boolean>(false);
+  const [sessionScorecard, setSessionScorecard] = useState<MockSessionEvaluationResponse | null>(null);
   const [aiState, setAiState] = useState<VoiceTurnResponse>({
     spokenResponse: "",
     thoughtSummary: "Ready to begin",
+    emotion: "encouraging",
     stage: "intro",
     detectedComplexity: { time: "Pending", space: "Pending" },
   });
@@ -81,12 +89,13 @@ export default function MockInterviewPage() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Voice Hook
+  // Voice Hook with Emotional Voice Acting, Calibrated Cadence & Prosody
   const {
     isListening,
     isSpeaking,
     currentTranscript,
     audioLevel,
+    currentEmotion,
     speak,
     stopSpeaking,
     toggleListening,
@@ -97,23 +106,66 @@ export default function MockInterviewPage() {
     },
   });
 
-  // Initial Welcome from Alex
-  useEffect(() => {
-    const welcomeTimeout = setTimeout(() => {
-      const welcomeMsg = `Hi there! I am Alex, your interviewer today. We'll be working on ${selectedQuestion.title}. Whenever you are ready, talk me through your initial thoughts!`;
-      setConversationHistory([
+  // Track whether initial welcome has already played
+  const hasSpokenWelcomeRef = useRef(false);
+  const currentQuestionIdRef = useRef(selectedQuestion.id);
+
+  // Aura greeting handler
+  const triggerAuraGreeting = useCallback((force = false) => {
+    if (hasSpokenWelcomeRef.current && !force) return;
+    hasSpokenWelcomeRef.current = true;
+
+    const welcomeMsg = `Hi there! I'm Aura, your interviewer today... We'll be working on ${selectedQuestion.title} together. Whenever you're ready, take your time and talk me through how you'd like to approach it!`;
+
+    setConversationHistory((prev) => {
+      // Don't add duplicate if the first message is already Aura's intro
+      if (!force && prev.length > 0 && prev[0].role === "model") return prev;
+      return [
         {
           role: "model",
           text: welcomeMsg,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
-      ]);
-      speak(welcomeMsg);
-      startListening();
-    }, 1200);
+        ...prev.filter((m) => m.text !== welcomeMsg),
+      ];
+    });
 
-    return () => clearTimeout(welcomeTimeout);
+    speak(welcomeMsg, "encouraging");
+    startListening();
   }, [selectedQuestion.title, speak, startListening]);
+
+  // Handle question change
+  useEffect(() => {
+    if (currentQuestionIdRef.current !== selectedQuestion.id) {
+      currentQuestionIdRef.current = selectedQuestion.id;
+      hasSpokenWelcomeRef.current = false;
+      triggerAuraGreeting(true);
+    }
+  }, [selectedQuestion.id, triggerAuraGreeting]);
+
+  // Attempt initial welcome after short delay
+  useEffect(() => {
+    const welcomeTimer = setTimeout(() => {
+      triggerAuraGreeting(false);
+    }, 600);
+
+    // Audio Autoplay Policy Fallback:
+    // If the browser blocks speech until a user gesture, trigger greeting on candidate's very first click anywhere on the page!
+    const handleFirstGesture = () => {
+      if (!hasSpokenWelcomeRef.current) {
+        triggerAuraGreeting(true);
+      }
+    };
+
+    window.addEventListener("click", handleFirstGesture, { once: true });
+    window.addEventListener("keydown", handleFirstGesture, { once: true });
+
+    return () => {
+      clearTimeout(welcomeTimer);
+      window.removeEventListener("click", handleFirstGesture);
+      window.removeEventListener("keydown", handleFirstGesture);
+    };
+  }, [triggerAuraGreeting]);
 
   // When candidate finishes speaking
   const handleCandidateSpoke = async (spokenText: string) => {
@@ -148,7 +200,8 @@ export default function MockInterviewPage() {
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           },
         ]);
-        speak(response.spokenResponse);
+        // Speak with emotional modulation (pitch, rate, volume)
+        speak(response.spokenResponse, response.emotion || "encouraging");
       }
     } catch (err) {
       console.error("AI turn error:", err);
@@ -181,6 +234,28 @@ export default function MockInterviewPage() {
       });
     } finally {
       setIsExecuting(false);
+    }
+  };
+
+  const handleEndAndReview = async () => {
+    setShowScorecard(true);
+    setIsEvaluatingScorecard(true);
+    try {
+      const result = await evaluateMockInterviewSession({
+        questionTitle: selectedQuestion.title,
+        questionDescription: selectedQuestion.description,
+        code,
+        language,
+        starterCode: selectedQuestion?.starterCode?.[language] || "",
+        conversationHistory: conversationHistory.map((h) => ({ role: h.role, text: h.text })),
+        executionResult,
+        sessionDurationSeconds: sessionTime,
+      });
+      setSessionScorecard(result);
+    } catch (e) {
+      console.error("Scorecard evaluation failed:", e);
+    } finally {
+      setIsEvaluatingScorecard(false);
     }
   };
 
@@ -219,19 +294,45 @@ export default function MockInterviewPage() {
           </div>
         </div>
 
-        {/* Center: AI Persona Active Pill */}
-        <div className="hidden md:flex items-center gap-2 px-3.5 py-1 rounded-full glass-pill text-xs font-medium text-indigo-300">
+        {/* Center: AI Persona Active Pill with Dynamic Emotional Presence */}
+        <div className="hidden md:flex items-center gap-2 px-3.5 py-1 rounded-full glass-pill text-xs font-medium text-slate-200">
           <span
             className={`w-2 h-2 rounded-full ${
               isSpeaking
-                ? "bg-emerald-400 animate-ping"
+                ? currentEmotion === "celebratory"
+                  ? "bg-amber-400 animate-ping"
+                  : currentEmotion === "curious"
+                  ? "bg-cyan-400 animate-ping"
+                  : currentEmotion === "empathetic"
+                  ? "bg-teal-400 animate-ping"
+                  : "bg-emerald-400 animate-ping"
                 : isListening
                 ? "bg-indigo-400 animate-pulse"
                 : "bg-slate-500"
             }`}
           />
           <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Alex (Gentle AI Interviewer)</span>
+          <span className="font-semibold text-white">Aura</span>
+          <span className="text-white/20">•</span>
+          <span
+            className={`capitalize font-semibold text-[11px] px-2 py-0.5 rounded-full ${
+              currentEmotion === "celebratory"
+                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                : currentEmotion === "curious"
+                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                : currentEmotion === "empathetic"
+                ? "bg-teal-500/20 text-teal-300 border border-teal-500/30"
+                : currentEmotion === "analytical"
+                ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
+                : "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+            }`}
+          >
+            {currentEmotion === "celebratory" && "🎉 Celebratory"}
+            {currentEmotion === "curious" && "💡 Inquisitive"}
+            {currentEmotion === "empathetic" && "🤝 Empathetic"}
+            {currentEmotion === "analytical" && "🧠 Analytical"}
+            {currentEmotion === "encouraging" && "✨ Encouraging"}
+          </span>
           <span className="text-white/20">•</span>
           <span className="font-mono text-emerald-400">{formatTimer(sessionTime)}</span>
         </div>
@@ -239,11 +340,12 @@ export default function MockInterviewPage() {
         {/* Right Action */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setShowScorecard(true)}
-            className="glass-btn-primary px-4 py-1.5 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer shadow-lg shadow-indigo-500/20"
+            onClick={handleEndAndReview}
+            disabled={isEvaluatingScorecard}
+            className="glass-btn-primary px-4 py-1.5 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer shadow-lg shadow-indigo-500/20 disabled:opacity-50"
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>End & Review Scorecard</span>
+            <span>{isEvaluatingScorecard ? "Evaluating..." : "End & Review Scorecard"}</span>
           </button>
         </div>
       </header>
@@ -396,12 +498,12 @@ export default function MockInterviewPage() {
             </div>
 
             {/* AI Status Voice Indicator */}
-            <h3 className="text-base font-bold text-white tracking-tight">Alex</h3>
+            <h3 className="text-base font-bold text-white tracking-tight">Aura</h3>
             <p className="text-xs text-slate-400 mt-0.5">
               {isSpeaking
-                ? "Alex is speaking to you..."
+                ? "Aura is speaking to you..."
                 : isAiProcessing
-                ? "Alex is thinking..."
+                ? "Aura is thinking..."
                 : isListening
                 ? "Listening to your voice... Speak anytime"
                 : "Microphone paused. Click to speak."}
@@ -414,8 +516,8 @@ export default function MockInterviewPage() {
               </div>
             )}
 
-            {/* Mic Toggle Button */}
-            <div className="mt-4 flex items-center gap-3">
+            {/* Mic & Voice Controls */}
+            <div className="mt-4 flex items-center justify-center gap-2.5">
               <button
                 onClick={toggleListening}
                 className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all ${
@@ -428,10 +530,18 @@ export default function MockInterviewPage() {
                 <span>{isListening ? "Microphone Active" : "Unmute Microphone"}</span>
               </button>
 
+              <button
+                onClick={() => triggerAuraGreeting(true)}
+                className="p-2 rounded-xl glass-btn-secondary text-slate-300 hover:text-white transition-colors cursor-pointer"
+                title="Replay Aura's Greeting & Problem Introduction"
+              >
+                <Volume2 className="w-4 h-4 text-indigo-400" />
+              </button>
+
               {isSpeaking && (
                 <button
                   onClick={stopSpeaking}
-                  className="p-2 rounded-xl glass-btn-secondary text-slate-400 hover:text-white"
+                  className="p-2 rounded-xl glass-btn-secondary text-slate-400 hover:text-white cursor-pointer"
                   title="Pause AI Voice"
                 >
                   <VolumeX className="w-4 h-4" />
@@ -525,7 +635,7 @@ export default function MockInterviewPage() {
                     >
                       <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
                         <span className="font-bold text-indigo-300">
-                          {item.role === "model" ? "Alex (AI Interviewer)" : "You (Candidate)"}
+                          {item.role === "model" ? "Aura (AI Interviewer)" : "You (Candidate)"}
                         </span>
                         <span>{item.timestamp}</span>
                       </div>
@@ -552,6 +662,22 @@ export default function MockInterviewPage() {
                     </div>
                   </div>
 
+                  <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">Aura Emotional Presence</span>
+                      <span className="text-xs font-bold capitalize text-white flex items-center gap-1.5 mt-0.5">
+                        {aiState.emotion === "celebratory" && "🎉 Celebratory & Upbeat"}
+                        {aiState.emotion === "curious" && "💡 Inquisitive & Probing"}
+                        {aiState.emotion === "empathetic" && "🤝 Empathetic & Calming"}
+                        {aiState.emotion === "analytical" && "🧠 Analytical & Focused"}
+                        {(aiState.emotion === "encouraging" || !aiState.emotion) && "✨ Encouraging & Inspiring"}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                      Modulating
+                    </span>
+                  </div>
+
                   <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                     <span className="text-emerald-400 font-bold block mb-1">Current Phase: {aiState.stage}</span>
                     <p className="text-[11px] text-slate-300">{aiState.thoughtSummary}</p>
@@ -572,54 +698,150 @@ export default function MockInterviewPage() {
 
       {/* END SESSION SCORECARD MODAL */}
       {showScorecard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-          <div className="glass-card max-w-lg w-full rounded-3xl p-6 sm:p-8 border border-white/15 relative space-y-6 shadow-2xl">
-            <div className="text-center space-y-1">
-              <span className="glass-pill px-3 py-1 rounded-full text-xs font-semibold text-emerald-300">
-                Evaluation Complete
-              </span>
-              <h2 className="text-2xl font-bold text-white">Interview Performance Scorecard</h2>
-              <p className="text-xs text-slate-400">Problem: {selectedQuestion.title} • Time: {formatTimer(sessionTime)}</p>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+          <div className="glass-modal max-w-xl w-full rounded-3xl p-6 sm:p-8 border border-white/15 relative space-y-6 shadow-2xl my-8">
+            {isEvaluatingScorecard ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4 text-center">
+                <div className="relative w-16 h-16 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-2 border-indigo-500/20 border-t-indigo-400 animate-spin" />
+                  <Bot className="w-8 h-8 text-indigo-400 animate-pulse" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-white">Aura is Calibrating Your Evaluation</h3>
+                  <p className="text-xs text-slate-400 max-w-sm">
+                    Analyzing code complexity, AST patterns, test execution results, and verbal communication rigor...
+                  </p>
+                </div>
+              </div>
+            ) : sessionScorecard ? (
+              <>
+                {/* Modal Header */}
+                <div className="text-center space-y-1.5">
+                  <div className="flex items-center justify-center gap-2">
+                    <span
+                      className={`glass-pill px-3 py-1 rounded-full text-xs font-semibold ${
+                        sessionScorecard.verdict === "Strong Hire"
+                          ? "text-emerald-300 border-emerald-500/30"
+                          : sessionScorecard.verdict === "Hire"
+                          ? "text-indigo-300 border-indigo-500/30"
+                          : sessionScorecard.verdict === "Lean Hire"
+                          ? "text-amber-300 border-amber-500/30"
+                          : "text-rose-300 border-rose-500/30"
+                      }`}
+                    >
+                      Overall Score: {sessionScorecard.overallScore}/100
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">Interview Performance Scorecard</h2>
+                  <p className="text-xs text-slate-400">
+                    Problem: {selectedQuestion.title} • Time: {formatTimer(sessionTime)}
+                  </p>
+                </div>
 
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                <span className="text-[10px] text-slate-400 block">Algorithmic Efficiency</span>
-                <span className="text-base font-bold text-emerald-400">92 / 100</span>
-              </div>
-              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                <span className="text-[10px] text-slate-400 block">Verbal Communication</span>
-                <span className="text-base font-bold text-indigo-400">88 / 100</span>
-              </div>
-              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                <span className="text-[10px] text-slate-400 block">Code Hygiene & Style</span>
-                <span className="text-base font-bold text-violet-400">95 / 100</span>
-              </div>
-              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                <span className="text-[10px] text-slate-400 block">Final Recommendation</span>
-                <span className="text-base font-bold text-emerald-300">Strong Hire</span>
-              </div>
-            </div>
+                {/* Verdict Banner */}
+                <div
+                  className={`p-4 rounded-2xl border text-xs leading-relaxed space-y-1.5 ${
+                    sessionScorecard.verdict === "Strong Hire"
+                      ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-200"
+                      : sessionScorecard.verdict === "Hire"
+                      ? "bg-indigo-500/10 border-indigo-500/25 text-indigo-200"
+                      : sessionScorecard.verdict === "Lean Hire"
+                      ? "bg-amber-500/10 border-amber-500/25 text-amber-200"
+                      : "bg-rose-500/10 border-rose-500/25 text-rose-200"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm tracking-wide uppercase">
+                      Recommendation: {sessionScorecard.verdict}
+                    </span>
+                    <span className="font-mono text-[10px] opacity-75">
+                      {sessionScorecard.overallScore} / 100
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300">{sessionScorecard.verdictRationale}</p>
+                </div>
 
-            <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-slate-300 leading-relaxed">
-              <span className="font-semibold text-indigo-300 block mb-1">Alex's Executive Feedback:</span>
-              "Great session! You thought aloud clearly before writing code, recognized the optimal hash map lookup pattern, and verified edge cases without hesitation."
-            </div>
+                {/* 3 Calibrated Dimensions */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 space-y-1">
+                    <span className="text-[10px] text-slate-400 block font-medium">Algorithmic Efficiency</span>
+                    <span className="text-lg font-bold text-indigo-400">
+                      {sessionScorecard.algorithmicEfficiency.score} / 100
+                    </span>
+                    <p className="text-[11px] text-slate-300 line-clamp-2">
+                      {sessionScorecard.algorithmicEfficiency.feedback}
+                    </p>
+                  </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowScorecard(false)}
-                className="flex-1 glass-btn-secondary py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white cursor-pointer"
-              >
-                Continue Practicing
-              </button>
-              <button
-                onClick={() => router.push("/")}
-                className="flex-1 glass-btn-primary py-2.5 rounded-xl text-xs font-semibold text-white cursor-pointer"
-              >
-                Return to Dashboard
-              </button>
-            </div>
+                  <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 space-y-1">
+                    <span className="text-[10px] text-slate-400 block font-medium">Verbal Communication</span>
+                    <span className="text-lg font-bold text-violet-400">
+                      {sessionScorecard.verbalCommunication.score} / 100
+                    </span>
+                    <p className="text-[11px] text-slate-300 line-clamp-2">
+                      {sessionScorecard.verbalCommunication.feedback}
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 space-y-1">
+                    <span className="text-[10px] text-slate-400 block font-medium">Code Hygiene & Logic</span>
+                    <span className="text-lg font-bold text-emerald-400">
+                      {sessionScorecard.codeHygiene.score} / 100
+                    </span>
+                    <p className="text-[11px] text-slate-300 line-clamp-2">
+                      {sessionScorecard.codeHygiene.feedback}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Strengths & Growth Areas */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  {sessionScorecard.keyStrengths?.length > 0 && (
+                    <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15 space-y-1">
+                      <span className="text-[11px] font-semibold text-emerald-400 block">Demonstrated Strengths</span>
+                      <ul className="list-disc list-inside space-y-0.5 text-slate-300 text-[11px]">
+                        {sessionScorecard.keyStrengths.map((str, idx) => (
+                          <li key={idx}>{str}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {sessionScorecard.growthAreas?.length > 0 && (
+                    <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/15 space-y-1">
+                      <span className="text-[11px] font-semibold text-amber-400 block">Areas for Growth</span>
+                      <ul className="list-disc list-inside space-y-0.5 text-slate-300 text-[11px]">
+                        {sessionScorecard.growthAreas.map((g, idx) => (
+                          <li key={idx}>{g}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Aura's Letter */}
+                <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-slate-300 leading-relaxed">
+                  <span className="font-semibold text-indigo-300 block mb-1">Aura's Executive Feedback:</span>
+                  <p className="text-[12px]">{sessionScorecard.auraFeedback}</p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setShowScorecard(false)}
+                    className="flex-1 glass-btn-secondary py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white cursor-pointer"
+                  >
+                    Continue Practicing
+                  </button>
+                  <button
+                    onClick={() => router.push("/")}
+                    className="flex-1 glass-btn-primary py-2.5 rounded-xl text-xs font-semibold text-white cursor-pointer"
+                  >
+                    Return to Dashboard
+                  </button>
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
       )}

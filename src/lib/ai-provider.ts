@@ -1,25 +1,32 @@
 import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// OpenRouter Free Models mapped by specialized task
+// OpenRouter Free Models mapped by specialized task (verified active & responsive)
 export const FREE_MODELS = {
-  // Ultra-responsive, natural conversational flow for Alex voice persona
+  // Ultra-responsive, natural conversational flow for Aura voice persona
   CONVERSATION: [
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "google/gemini-2.0-flash-exp:free",
-    "qwen/qwen-2.5-coder-32b-instruct:free",
+    "dots-studio/dots-3-note-preview:free",
+    "cohere/north-mini-code:free",
+    "poolside/laguna-s-2.1:free",
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "recursive/flint-v1.0:free",
   ],
   // Tailored specifically for algorithmic code, syntax, Big-O, and edge cases
   CODING: [
-    "qwen/qwen-2.5-coder-32b-instruct:free",
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "mistralai/mistral-small-24b-instruct-2501:free",
+    "cohere/north-mini-code:free",
+    "poolside/laguna-s-2.1:free",
+    "dots-studio/dots-3-note-preview:free",
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
   ],
   // In-depth analytical reasoning for scorecards & hiring memos
   EVALUATION: [
-    "deepseek/deepseek-r1:free",
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "google/gemini-2.0-flash-exp:free",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "dots-studio/dots-3-note-preview:free",
+    "cohere/north-mini-code:free",
+    "poolside/laguna-s-2.1:free",
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
   ],
 } as const;
 

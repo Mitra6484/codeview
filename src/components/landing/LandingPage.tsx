@@ -2,8 +2,7 @@
 
 import LandingNavbar from "./LandingNavbar";
 import HeroSection from "./HeroSection";
-import FeaturesGrid from "./FeaturesGrid";
-import WorkflowSection from "./WorkflowSection";
+import AgentsShowcase from "./AgentsShowcase";
 import AuthSection from "./AuthSection";
 import LandingFooter from "./LandingFooter";
 
@@ -13,11 +12,10 @@ export default function LandingPage() {
       {/* Floating Glass Navigation */}
       <LandingNavbar />
 
-      {/* Main Content Sections */}
+      {/* Main Authentic Content Sections */}
       <main className="flex-1 flex flex-col">
         <HeroSection />
-        <FeaturesGrid />
-        <WorkflowSection />
+        <AgentsShowcase />
         <AuthSection />
       </main>
 

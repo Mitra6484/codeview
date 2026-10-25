@@ -1,19 +1,77 @@
+"use client";
+
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { useEffect, useState, useCallback } from "react";
+
+export type UserRole = "candidate" | "interviewer";
 
 export const useUserRole = () => {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
 
-  const userData = useQuery(api.users.getUserByClerkId, {
-    clerkId: user?.id || "",
-  });
+  const userData = useQuery(
+    api.users.getUserByClerkId,
+    user?.id ? { clerkId: user.id } : "skip"
+  );
+  const syncUser = useMutation(api.users.syncUser);
 
-  const isLoading = userData === undefined;
+  const [testRole, setTestRole] = useState<UserRole | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Sync role changes and initialize from localStorage after hydration
+  useEffect(() => {
+    setIsMounted(true);
+    const saved =
+      (localStorage.getItem("codeview_test_role") as UserRole | null) ||
+      (localStorage.getItem("codeview_signup_role") as UserRole | null);
+    if (saved === "interviewer" || saved === "candidate") {
+      setTestRole(saved);
+    }
+
+    const handleRoleChanged = () => {
+      const updated = localStorage.getItem("codeview_test_role") as UserRole | null;
+      if (updated === "interviewer" || updated === "candidate") {
+        setTestRole(updated);
+      }
+    };
+
+    window.addEventListener("codeview_role_changed", handleRoleChanged);
+    return () => window.removeEventListener("codeview_role_changed", handleRoleChanged);
+  }, []);
+
+  // Auto-sync user to Convex on login
+  useEffect(() => {
+    if (isLoaded && user && userData === null) {
+      syncUser({
+        name: user.fullName || user.firstName || "Engineer",
+        email: user.primaryEmailAddress?.emailAddress || "",
+        clerkId: user.id,
+        image: user.imageUrl,
+      }).catch((e) => console.log("User sync notice:", e));
+    }
+  }, [isLoaded, user, userData, syncUser]);
+
+  const switchRole = useCallback((newRole: UserRole) => {
+    setTestRole(newRole);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("codeview_test_role", newRole);
+      localStorage.removeItem("codeview_signup_role");
+      window.dispatchEvent(new Event("codeview_role_changed"));
+    }
+  }, []);
+
+  const activeRole: UserRole =
+    testRole || (userData?.role as UserRole) || "candidate";
+
+  const isLoading = isLoaded && !!user && userData === undefined && testRole === null;
 
   return {
     isLoading,
-    isInterviewer: userData?.role === "interviewer",
-    isCandidate: userData?.role === "candidate",
+    isMounted,
+    role: activeRole,
+    isInterviewer: isMounted ? activeRole === "interviewer" : false,
+    isCandidate: isMounted ? activeRole === "candidate" : true,
+    switchRole,
   };
 };

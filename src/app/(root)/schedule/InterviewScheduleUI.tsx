@@ -226,7 +226,7 @@ function InterviewScheduleUI() {
               </button>
             </DialogTrigger>
 
-            <DialogContent className="glass-card border border-white/15 rounded-3xl sm:max-w-[540px] max-h-[85vh] overflow-y-auto text-white">
+            <DialogContent className="glass-modal rounded-3xl sm:max-w-[540px] max-h-[85vh] overflow-y-auto text-white">
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold text-white">{editingInterview ? "Edit Interview Session" : "Schedule Interview Session"}</DialogTitle>
               </DialogHeader>
@@ -415,30 +415,29 @@ function InterviewScheduleUI() {
                       className="relative group"
                     >
                       <MeetingCard interview={interview} />
-                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 ease-in-out transform translate-y-1 group-hover:translate-y-0">
+                      <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 ease-in-out transform translate-y-1 group-hover:translate-y-0">
                         {interview.status === "scheduled" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
+                          <button
                             onClick={() => handleEdit(interview)}
+                            className="glass-btn-secondary px-2.5 py-1 text-xs rounded-lg text-slate-200 hover:text-white flex items-center gap-1 cursor-pointer shadow-md"
                           >
-                            Edit
-                          </Button>
+                            <PencilIcon className="h-3 w-3" />
+                            <span>Edit</span>
+                          </button>
                         )}
                         {interview.interviewerIds.includes(user?.id || "") && (
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-destructive/90"
+                          <button
                             onClick={() => handleDelete(interview._id)}
                             disabled={isDeleting === interview._id}
+                            className="bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 rounded-lg p-1.5 cursor-pointer transition-all shadow-md disabled:opacity-50"
+                            title="Delete Interview"
                           >
                             {isDeleting === interview._id ? (
-                              <Loader2Icon className="h-4 w-4 animate-spin" />
+                              <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
                             ) : (
-                              <Trash2Icon className="h-4 w-4" />
+                              <Trash2Icon className="h-3.5 w-3.5" />
                             )}
-                          </Button>
+                          </button>
                         )}
                       </div>
                     </motion.div>
@@ -451,9 +450,15 @@ function InterviewScheduleUI() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center py-12 text-muted-foreground"
+              className="text-center py-16 glass-card rounded-3xl border border-white/10 text-slate-400 space-y-3"
             >
-              No interviews scheduled!
+              <div className="w-12 h-12 rounded-2xl glass-surface border border-white/10 flex items-center justify-center text-slate-400 mx-auto">
+                <PencilIcon className="w-5 h-5 opacity-40" />
+              </div>
+              <p className="text-base font-semibold text-white">No interviews scheduled yet</p>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                Click "Schedule Interview" above to book a new coding session with a candidate.
+              </p>
             </motion.div>
           )}
         </AnimatePresence>

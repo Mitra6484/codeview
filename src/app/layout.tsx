@@ -35,32 +35,27 @@ export default function RootLayout({
 }>) {
   return (
     <ConvexClerkProvider>
-      <html lang="en" suppressHydrationWarning>
+      <html lang="en" className="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
-            enableSystem
+            forcedTheme="dark"
+            enableSystem={false}
             disableTransitionOnChange
           >
-            <SignedIn>
-              <div className="min-h-screen glass-canvas">
+            <div className="min-h-screen glass-canvas flex flex-col">
+              <SignedIn>
                 <Navbar/>
-                <main className="px-4 sm:px-6 lg:px-8">
-                  <PageTransition>
-                    {children}
-                  </PageTransition>
-                </main>
-              </div>
-            </SignedIn>
-            
-            <SignedOut>
-              <div className="min-h-screen glass-canvas">
-                {children}
-              </div>
-            </SignedOut>
+              </SignedIn>
+              <main className="flex-1">
+                <PageTransition>
+                  {children}
+                </PageTransition>
+              </main>
+            </div>
           </ThemeProvider>
           <Toaster/>
         </body>

@@ -55,12 +55,12 @@ export default function ExecutiveScorecardView({
           <div className="flex items-center gap-2 mb-1.5">
             <span className="glass-pill px-3 py-1 rounded-full text-xs font-semibold text-indigo-300 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Hiring Committee Memo</span>
+              <span>Veritas Executive Scorecard</span>
             </span>
             <span className="text-xs text-slate-400 font-mono">Candidate: {candidateName}</span>
           </div>
           <h2 className="text-2xl font-bold text-white tracking-tight">{interviewTitle}</h2>
-          <p className="text-xs text-slate-400 mt-1">Multi-dimensional evaluation report backed by AI assessment</p>
+          <p className="text-xs text-slate-400 mt-1">Multi-dimensional rubric report synthesized by Veritas Evaluator Agent</p>
         </div>
 
         {/* VERDICT BADGE */}

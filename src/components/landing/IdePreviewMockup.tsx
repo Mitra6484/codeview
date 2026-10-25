@@ -37,7 +37,7 @@ export default function IdePreviewMockup() {
         </div>
       </div>
 
-      {/* Main Workspace Body: Code Editor + Floating Video PIP + Gemini AI Panel */}
+      {/* Main Workspace Body: Code Editor + Floating Video PIP + Nexus Co-Pilot Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[460px] bg-slate-950/70 font-mono text-xs sm:text-sm">
         {/* Left: Monaco-style Code View (8 cols) */}
         <div className="lg:col-span-7 p-4 sm:p-6 overflow-x-auto border-b lg:border-b-0 lg:border-r border-white/10 relative">
@@ -81,7 +81,7 @@ export default function IdePreviewMockup() {
           </div>
         </div>
 
-        {/* Right: Floating Glass Video PIP + Gemini AI Intelligence Panel (5 cols) */}
+        {/* Right: Floating Glass Video PIP + Nexus Co-Pilot Intelligence Panel (5 cols) */}
         <div className="lg:col-span-5 p-4 sm:p-5 flex flex-col gap-4 font-sans bg-slate-950/40">
           {/* Glass Video Feeds */}
           <div className="grid grid-cols-2 gap-3">
@@ -124,7 +124,7 @@ export default function IdePreviewMockup() {
             </div>
           </div>
 
-          {/* Gemini AI Intelligence Card */}
+          {/* Nexus AI Co-Pilot Intelligence Card */}
           <div className="flex-1 rounded-2xl glass-card border border-indigo-500/20 bg-gradient-to-b from-indigo-950/20 to-slate-950/60 p-4 flex flex-col justify-between shadow-[0_4px_24px_rgba(99,102,241,0.12)]">
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -133,8 +133,8 @@ export default function IdePreviewMockup() {
                     <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-semibold text-white">Gemini Code Analysis</h4>
-                    <p className="text-[10px] text-slate-400">Real-time AST & Big-O Insights</p>
+                    <h4 className="text-xs font-semibold text-white">Nexus Co-Pilot Radar</h4>
+                    <p className="text-[10px] text-slate-400">Real-time AST & Progressive Nudges</p>
                   </div>
                 </div>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-semibold">

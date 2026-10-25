@@ -5,7 +5,11 @@ import { api } from "../../convex/_generated/api";
 import { Button } from "./ui/button";
 import toast from "react-hot-toast";
 
-function EndCallButton() {
+interface EndCallButtonProps {
+  onBeforeEnd?: () => void;
+}
+
+function EndCallButton({ onBeforeEnd }: EndCallButtonProps = {}) {
   const call = useCall();
   const router = useRouter();
   const { useLocalParticipant } = useCallStateHooks();
@@ -24,6 +28,11 @@ function EndCallButton() {
   if (!isMeetingOwner) return null;
 
   const endCall = async () => {
+    if (onBeforeEnd) {
+      onBeforeEnd();
+      return;
+    }
+
     try {
       await call.endCall();
 

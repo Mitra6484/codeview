@@ -6,11 +6,15 @@ import { StreamClient } from "@stream-io/node-sdk";
 export const streamTokenProvider = async () => {
   const user = await currentUser();
 
-  if (!user) throw new Error("User not authenticated");
+  if (!user) return "";
+
+  if (!process.env.NEXT_PUBLIC_STREAM_API_KEY || !process.env.STREAM_SECRET_KEY) {
+    return "";
+  }
 
   const streamClient = new StreamClient(
-    process.env.NEXT_PUBLIC_STREAM_API_KEY!,
-    process.env.STREAM_SECRET_KEY!
+    process.env.NEXT_PUBLIC_STREAM_API_KEY,
+    process.env.STREAM_SECRET_KEY
   );
 
   const token = streamClient.generateUserToken({ user_id: user.id });

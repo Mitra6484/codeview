@@ -20,17 +20,14 @@ export default function LandingFooter() {
 
         {/* Links */}
         <div className="flex items-center gap-6">
-          <a href="#features" className="hover:text-white transition-colors">
-            Features
-          </a>
           <a href="#ide-preview" className="hover:text-white transition-colors">
             IDE Workspace
           </a>
-          <a href="#workflow" className="hover:text-white transition-colors">
-            Workflow
+          <a href="#agents" className="hover:text-white transition-colors">
+            5 AI Agents
           </a>
           <a href="#auth-section" className="hover:text-white transition-colors">
-            Sign In
+            Get Started
           </a>
         </div>
 

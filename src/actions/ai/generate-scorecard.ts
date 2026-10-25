@@ -39,8 +39,15 @@ export async function generateExecutiveScorecard(
 ): Promise<ExecutiveScorecardResponse> {
   try {
     const systemPrompt = `
-You are the Head of Engineering Talent & Hiring Review Board for a premier technology company.
-Your task is to review technical interview data, comments, code, and ratings to produce an objective, rigorous, and thorough Executive Hiring Scorecard.
+You are Veritas, the Principal Technical Bar Raiser & Hiring Review Board Chair evaluating an engineering interview on Codeview.
+You must be 100% objective, rigorous, and accurately calibrated.
+
+CALIBRATION SCORING RUBRIC:
+- 85 - 100 ("Strong Hire"): ONLY for candidates with verified optimal algorithmic solutions, clean idioms, defensive edge-case handling, and proactive articulation.
+- 70 - 84 ("Hire"): Candidate delivered a working solution with good structure, passed test criteria, and communicated clearly with minor interviewer guidance.
+- 50 - 69 ("Lean Hire"): Solved only via brute force or incomplete logic, showed hesitation on data structure trade-offs, or required multiple hints.
+- 0 - 49 ("No Hire"): Candidate wrote broken/empty code, failed syntax or runtime execution, or showed significant gaps in foundational computer science principles.
+- If interviewer ratings average <= 2.5/5 or if code is absent, verdict MUST be "No Hire".
 
 Analyze the 5 key engineering dimensions:
 1. Algorithmic Rigor & Correctness (0-100)
@@ -63,7 +70,7 @@ Output STRICTLY as valid JSON matching this schema:
   },
   "keyStrengths": ["Strength 1", "Strength 2", "Strength 3"],
   "growthAreas": ["Growth Area 1", "Growth Area 2"],
-  "candidateFeedbackLetter": "A warm, constructive, encouraging letter addressing the candidate with actionable improvement guidance."
+  "candidateFeedbackLetter": "A constructive, professional letter addressing the candidate with actionable improvement guidance."
 }
 `;
 
@@ -105,50 +112,85 @@ Generate a high-signal Executive Hiring Scorecard in JSON format now.`;
       modelUsed: aiRes.modelUsed,
     };
   } catch (error: any) {
-    console.error("Error generating executive scorecard:", error);
+    console.warn("Veritas scorecard fallback activated, computing calibrated baseline:", error);
+
+    // Calculate deterministic rating based on actual candidate comments and code presence
+    const ratings = input.comments?.map((c) => c.rating).filter((r): r is number => typeof r === "number") || [];
+    const avgRating = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
+    const hasCode = Boolean(input.codeSnippet && input.codeSnippet.trim().length > 30);
+
+    let overall = 68;
+    let verdict: "Strong Hire" | "Hire" | "Lean Hire" | "No Hire" = "Lean Hire";
+
+    if (avgRating !== null) {
+      if (avgRating >= 4.5 && hasCode) {
+        overall = 90;
+        verdict = "Strong Hire";
+      } else if (avgRating >= 3.5) {
+        overall = 78;
+        verdict = "Hire";
+      } else if (avgRating >= 2.5) {
+        overall = 60;
+        verdict = "Lean Hire";
+      } else {
+        overall = 38;
+        verdict = "No Hire";
+      }
+    } else if (!hasCode) {
+      overall = 32;
+      verdict = "No Hire";
+    }
+
     return {
-      overallScore: 88,
-      verdict: "Strong Hire",
+      overallScore: overall,
+      verdict,
       verdictRationale:
-        "The candidate demonstrated strong algorithmic proficiency, structured problem deconstruction, and clean code hygiene under time constraints.",
+        verdict === "No Hire"
+          ? "Candidate did not provide verified code implementation or sufficient positive interviewer signals."
+          : verdict === "Lean Hire"
+          ? "Candidate showed foundational reasoning but required structural guidance on efficiency and scale."
+          : verdict === "Hire"
+          ? "Candidate demonstrated solid implementation competence and clear technical articulation."
+          : "Candidate demonstrated mastery across algorithmic design, modular code structure, and communication.",
       dimensions: {
         algorithmicRigor: {
           name: "Algorithmic Rigor",
-          score: 90,
-          feedback: "Demonstrated optimal Big-O trade-offs with robust data structure selection.",
+          score: Math.min(100, Math.max(20, overall + 2)),
+          feedback: hasCode
+            ? "Constructed an algorithmic flow addressing primary problem criteria."
+            : "No submitted code was available to assess algorithmic complexity.",
         },
         verbalCommunication: {
           name: "Verbal Communication",
-          score: 86,
-          feedback: "Proactively stated assumptions and thought out loud throughout implementation.",
+          score: Math.min(100, Math.max(20, overall - 2)),
+          feedback: "Articulated concepts during session discussion.",
         },
         codeHygiene: {
           name: "Code Hygiene & Style",
-          score: 92,
-          feedback: "Idiomatic syntax, descriptive variable naming, and modular decomposition.",
+          score: hasCode ? Math.min(100, Math.max(20, overall + 4)) : 20,
+          feedback: hasCode ? "Readable formatting and syntax." : "Incomplete submission.",
         },
         problemSolvingAgility: {
           name: "Problem-Solving Agility",
-          score: 88,
-          feedback: "Quickly adapted when challenged on boundary behavior and scale bottlenecks.",
+          score: Math.min(100, Math.max(20, overall)),
+          feedback: "Responded to constraints raised in session.",
         },
         edgeCaseDefensiveness: {
           name: "Edge Case Defensiveness",
-          score: 84,
-          feedback: "Validated null, duplicate, and empty inputs with clear test assertions.",
+          score: Math.min(100, Math.max(20, overall - 5)),
+          feedback: "Boundary condition coverage can be expanded.",
         },
       },
       keyStrengths: [
-        "Rapid transition from brute-force concept to optimal hash-indexed approach.",
-        "Clear verbal articulation of time and space trade-offs before typing.",
-        "Clean, production-grade variable naming and code structure.",
+        "Engaged with interviewer on problem parameters.",
+        hasCode ? "Produced syntax for core problem logic." : "Reviewed system expectations.",
       ],
       growthAreas: [
-        "Could independently state extreme boundary constraints without initial interviewer prompt.",
-        "Consider asynchronous queueing patterns when scaling writes.",
+        "Ensure full test coverage for extreme boundary cases.",
+        "Proactively state Big-O bounds early in problem deconstruction.",
       ],
-      candidateFeedbackLetter: `Hi ${input.candidateName},\n\nThank you for interviewing with our engineering team today! We were impressed by your structured problem-solving approach and your ability to articulate trade-offs clearly. Your code was clean, readable, and demonstrated solid algorithmic fundamentals.\n\nKeep up the great work, and we look forward to next steps!\n\nBest regards,\nEngineering Hiring Review Committee`,
-      modelUsed: "fallback",
+      candidateFeedbackLetter: `Hi ${input.candidateName},\n\nThank you for participating in the technical interview session today. Our review board evaluated your performance based on code correctness, communication, and algorithmic trade-offs.\n\nContinue practicing boundary-condition analysis and structured problem decomposition.\n\nBest regards,\nEngineering Hiring Review Committee`,
+      modelUsed: "calibrated-baseline",
     };
   }
 }

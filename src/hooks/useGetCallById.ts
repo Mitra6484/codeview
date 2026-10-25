@@ -8,7 +8,10 @@ const useGetCallById = (id: string | string[]) => {
   const client = useStreamVideoClient();
 
   useEffect(() => {
-    if (!client) return;
+    if (!client) {
+      setIsCallLoading(false);
+      return;
+    }
 
     const getCall = async () => {
       try {
