@@ -7,26 +7,25 @@ export const FREE_MODELS = {
   CONVERSATION: [
     "dots-studio/dots-3-note-preview:free",
     "cohere/north-mini-code:free",
-    "poolside/laguna-s-2.1:free",
-    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-    "nvidia/nemotron-3-ultra-550b-a55b:free",
     "recursive/flint-v1.0:free",
+    "liquid/lfm-2.5-2.6b:free",
+    "nvidia/nemotron-3.5-lightning:free",
   ],
   // Tailored specifically for algorithmic code, syntax, Big-O, and edge cases
   CODING: [
     "cohere/north-mini-code:free",
-    "poolside/laguna-s-2.1:free",
     "dots-studio/dots-3-note-preview:free",
-    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "recursive/flint-v1.0:free",
+    "liquid/lfm-2.5-2.6b:free",
+    "nvidia/nemotron-3.5-lightning:free",
   ],
   // In-depth analytical reasoning for scorecards & hiring memos
   EVALUATION: [
-    "nvidia/nemotron-3-ultra-550b-a55b:free",
     "dots-studio/dots-3-note-preview:free",
     "cohere/north-mini-code:free",
-    "poolside/laguna-s-2.1:free",
-    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    "recursive/flint-v1.0:free",
+    "liquid/lfm-2.5-2.6b:free",
+    "nvidia/nemotron-3.5-lightning:free",
   ],
 } as const;
 
@@ -97,6 +96,18 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
 
         const output = completion.choices[0]?.message?.content;
         if (output) {
+          // Detect OpenRouter upstream provider error strings returned with HTTP 200
+          const isUpstreamError =
+            output.includes('"error_type"') ||
+            output.includes('"provider_unavailable"') ||
+            output.includes("ResourceExhausted") ||
+            (output.includes('"code":') && output.includes('"message":') && !output.includes('"spokenResponse"'));
+
+          if (isUpstreamError) {
+            console.warn(`OpenRouter free model ${model} returned upstream error payload, trying next...`);
+            continue;
+          }
+
           return {
             text: output,
             modelUsed: model,
@@ -110,33 +121,35 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
     }
   }
 
-  // 2. Fallback to Gemini 2.0 Flash (free in Google AI Studio)
+  // 2. Fallback to Gemini API if GEMINI_API_KEY is available
   const gemini = getGeminiClient();
   if (gemini) {
-    try {
-      const model = gemini.getGenerativeModel({
-        model: "gemini-2.0-flash",
-        generationConfig: options.jsonMode
-          ? { responseMimeType: "application/json", temperature: options.temperature ?? 0.7 }
-          : { temperature: options.temperature ?? 0.7 },
-        systemInstruction: options.systemPrompt,
-      });
+    const candidateGeminiModels = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
+    for (const gModel of candidateGeminiModels) {
+      try {
+        const model = gemini.getGenerativeModel({
+          model: gModel,
+          generationConfig: options.jsonMode
+            ? { responseMimeType: "application/json", temperature: options.temperature ?? 0.7 }
+            : { temperature: options.temperature ?? 0.7 },
+          systemInstruction: options.systemPrompt,
+        });
 
-      const res = await model.generateContent(options.prompt);
-      const text = res.response.text();
+        const res = await model.generateContent(options.prompt);
+        const text = res.response.text();
 
-      return {
-        text,
-        modelUsed: "gemini-2.0-flash",
-        provider: "gemini",
-      };
-    } catch (geminiErr: any) {
-      console.error("Gemini fallback failed:", geminiErr);
-      throw new Error(`AI providers exhausted: ${geminiErr?.message || "Failed to generate completion"}`);
+        return {
+          text,
+          modelUsed: gModel,
+          provider: "gemini",
+        };
+      } catch (geminiErr: any) {
+        console.warn(`Gemini model ${gModel} fallback failed:`, geminiErr?.message);
+      }
     }
   }
 
   throw new Error(
-    "No AI API key found. Please provide OPENROUTER_API_KEY (for free OpenRouter models) or GEMINI_API_KEY in .env"
+    "No AI API provider responded successfully. Please verify OPENROUTER_API_KEY in your environment."
   );
 }

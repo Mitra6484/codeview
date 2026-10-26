@@ -123,17 +123,42 @@ Respond as Aura in valid JSON format now.`;
 
     try {
       const parsed = JSON.parse(cleanJson) as VoiceTurnResponse;
+      if (
+        !parsed.spokenResponse ||
+        typeof parsed.spokenResponse !== "string" ||
+        parsed.spokenResponse.trim().length === 0 ||
+        (parsed as any).error ||
+        (parsed as any).code === 502
+      ) {
+        throw new Error("Model returned invalid structure without spokenResponse");
+      }
+
       return {
         ...parsed,
+        spokenResponse: parsed.spokenResponse.trim(),
         emotion: parsed.emotion || "encouraging",
         modelUsed: aiRes.modelUsed,
         provider: aiRes.provider,
       };
     } catch (e) {
+      const fallbackSpeech = cleanJson
+        .replace(/[*_#`{}]/g, "")
+        .replace(/"spokenResponse"\s*:\s*"/g, "")
+        .slice(0, 200)
+        .trim();
+
+      const isStuck = /don't know|not sure|stuck|help|confused/i.test(input.userSpeech);
+      const spoken =
+        fallbackSpeech && fallbackSpeech.length > 15 && !fallbackSpeech.includes("Upstream error")
+          ? fallbackSpeech
+          : isStuck
+          ? "That's completely fine... Take your time. Let's break the problem down into smaller steps together. What's the brute force way you'd solve this?"
+          : "I like that direction... Walk me through how you're thinking about the time and space complexity.";
+
       return {
-        spokenResponse: cleanJson.replace(/[*_#`{}]/g, "").slice(0, 200),
+        spokenResponse: spoken,
         thoughtSummary: "Turn processed with direct guidance",
-        emotion: "encouraging",
+        emotion: isStuck ? "empathetic" : "curious",
         stage: "coding",
         modelUsed: aiRes.modelUsed,
         provider: aiRes.provider,
@@ -142,7 +167,7 @@ Respond as Aura in valid JSON format now.`;
   } catch (error: any) {
     console.error("Error in processVoiceInterviewTurn:", error);
     // Intelligent contextual fallback
-    const isStuck = /don't know|not sure|stuck|help/i.test(input.userSpeech);
+    const isStuck = /don't know|not sure|stuck|help|confused/i.test(input.userSpeech);
     return {
       spokenResponse: isStuck
         ? "That's completely fine... Take your time. Let's break the problem down into smaller steps together. What's the brute force way you'd solve this?"

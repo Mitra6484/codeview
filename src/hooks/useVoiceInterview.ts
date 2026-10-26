@@ -222,6 +222,9 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isListeningRef = useRef<boolean>(false);
+  const isAuraSpeakingRef = useRef<boolean>(false);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const accumulatedSpeechRef = useRef<string>("");
   const onSpeechResultRef = useRef(onSpeechResult);
   onSpeechResultRef.current = onSpeechResult;
 
@@ -264,35 +267,63 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
     recognition.lang = "en-US";
 
     recognition.onresult = (event: any) => {
+      // Echo suppression: Ignore input while Aura is actively speaking through speakers
+      if (isAuraSpeakingRef.current) return;
+
       let interim = "";
-      let finalTranscript = "";
+      let finalChunk = "";
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscript += transcript;
+          finalChunk += transcript;
         } else {
           interim += transcript;
         }
       }
 
-      const activeText = finalTranscript || interim;
+      const activeText = (accumulatedSpeechRef.current + " " + (finalChunk || interim)).trim();
       setCurrentTranscript(activeText);
 
-      // Simulate audio frequency wave when user speaks
+      // Audio waveform simulation
       setAudioLevel(Math.min(100, Math.max(20, activeText.length * 5)));
 
-      if (finalTranscript.trim()) {
-        if (onSpeechResultRef.current) {
-          onSpeechResultRef.current(finalTranscript.trim());
+      // 1. Browser emitted a definitive isFinal result
+      if (finalChunk.trim()) {
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = null;
         }
+        const fullSpoken = (accumulatedSpeechRef.current + " " + finalChunk).trim();
+        accumulatedSpeechRef.current = "";
         setCurrentTranscript("");
         setAudioLevel(0);
+        if (fullSpoken && onSpeechResultRef.current) {
+          onSpeechResultRef.current(fullSpoken);
+        }
+        return;
+      }
+
+      // 2. Browser only stream interim results (common on Chrome with background room noise)
+      // Use 1.2s silence detection debounce to auto-commit when candidate pauses speaking
+      if (interim.trim()) {
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+        }
+        silenceTimerRef.current = setTimeout(() => {
+          const autoCommitText = (accumulatedSpeechRef.current + " " + interim).trim();
+          if (autoCommitText.length > 0 && onSpeechResultRef.current && !isAuraSpeakingRef.current) {
+            accumulatedSpeechRef.current = "";
+            setCurrentTranscript("");
+            setAudioLevel(0);
+            onSpeechResultRef.current(autoCommitText);
+          }
+        }, 1200);
       }
     };
 
     recognition.onerror = (event: any) => {
-      console.warn("Speech recognition error:", event.error);
+      console.warn("Speech recognition warning/error:", event.error);
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
         isListeningRef.current = false;
         setIsListening(false);
@@ -300,11 +331,21 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
     };
 
     recognition.onend = () => {
-      if (isListeningRef.current) {
+      // If recognition cycled while we had pending speech, commit it
+      if (accumulatedSpeechRef.current.trim() && onSpeechResultRef.current && !isAuraSpeakingRef.current) {
+        const pending = accumulatedSpeechRef.current.trim();
+        accumulatedSpeechRef.current = "";
+        setCurrentTranscript("");
+        setAudioLevel(0);
+        onSpeechResultRef.current(pending);
+      }
+
+      // Auto-restart continuous listening unless stopped or Aura is currently vocalizing
+      if (isListeningRef.current && !isAuraSpeakingRef.current) {
         try {
           recognition.start();
         } catch (e) {
-          // Already active
+          // Already running
         }
       }
     };
@@ -312,6 +353,9 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
     recognitionRef.current = recognition;
 
     return () => {
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
@@ -323,18 +367,19 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
     };
   }, []);
 
-  // Text-To-Speech Output with Slower Natural Cadence & Sweet Prosody
+  // Text-To-Speech Output with Natural Cadence, Prosody & Chrome Heartbeat
   const speak = useCallback((rawText: string, emotion: AuraEmotion = "encouraging") => {
     if (typeof window === "undefined" || !synthRef.current || !rawText) return;
 
     const text = prepareSpeechText(rawText);
     if (!text) return;
 
-    // Set current active emotion
+    // Flag Aura as actively vocalizing to prevent hearing her own voice through mic
+    isAuraSpeakingRef.current = true;
     setCurrentEmotion(emotion || "encouraging");
 
-    // Temporarily pause recognition to prevent AI hearing itself
-    if (recognitionRef.current && isListeningRef.current) {
+    // Pause recognition during speech
+    if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
       } catch (e) {}
@@ -343,14 +388,12 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
     const doSpeak = () => {
       if (!synthRef.current) return;
 
-      // Ensure synthesis is active & unpaused
       try {
         if (synthRef.current.paused) {
           synthRef.current.resume();
         }
       } catch (e) {}
 
-      // Resolve available voices without blocking
       let voices = voicesRef.current;
       if (!voices || voices.length === 0) {
         voices = synthRef.current.getVoices() || [];
@@ -362,13 +405,13 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "en-US";
 
-      // Modulate prosody: slower tempo and sweet melodic pitch
+      // Modulate prosody: slower tempo and sweet melodious pitch
       const prosody = EMOTION_PROSODY[emotion] || EMOTION_PROSODY.encouraging;
       utterance.rate = prosody.rate;
       utterance.pitch = prosody.pitch;
       utterance.volume = prosody.volume;
 
-      // Pick best sweet, warm, high-fidelity natural voice if available
+      // Select sweet feminine voice
       if (voices.length > 0) {
         const sweetVoice = selectBestSweetVoice(voices);
         if (sweetVoice) {
@@ -377,7 +420,6 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
         }
       }
 
-      // Retain in ref to prevent Chromium garbage collector mid-utterance
       activeUtteranceRef.current = utterance;
 
       utterance.onstart = () => {
@@ -389,19 +431,30 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
         setIsSpeaking(false);
         setAudioLevel(0);
         activeUtteranceRef.current = null;
-        // Resume listening for candidate's response only if mic was active
-        if (isListeningRef.current && recognitionRef.current) {
-          try {
-            recognitionRef.current.start();
-          } catch (e) {}
-        }
+        // 250ms room echo cooldown before reopening mic
+        setTimeout(() => {
+          isAuraSpeakingRef.current = false;
+          if (isListeningRef.current && recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+            } catch (e) {}
+          }
+        }, 250);
       };
 
       utterance.onerror = (e) => {
-        console.warn("Speech synthesis error or interrupted:", e);
+        console.warn("Speech synthesis notice:", e);
         setIsSpeaking(false);
         setAudioLevel(0);
         activeUtteranceRef.current = null;
+        setTimeout(() => {
+          isAuraSpeakingRef.current = false;
+          if (isListeningRef.current && recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+            } catch (e) {}
+          }
+        }, 250);
       };
 
       try {
@@ -409,10 +462,10 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
         synthRef.current.speak(utterance);
       } catch (e) {
         console.warn("Speech synthesis speak exception:", e);
+        isAuraSpeakingRef.current = false;
       }
     };
 
-    // If currently speaking, cancel first and wait a tick to avoid Chrome dropping the new utterance
     if (synthRef.current.speaking || synthRef.current.pending) {
       synthRef.current.cancel();
       setTimeout(doSpeak, 60);
@@ -427,13 +480,14 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
       setIsSpeaking(false);
       setAudioLevel(0);
       activeUtteranceRef.current = null;
+      isAuraSpeakingRef.current = false;
     }
   }, []);
 
   const startListening = useCallback(() => {
     isListeningRef.current = true;
     setIsListening(true);
-    if (!recognitionRef.current) return;
+    if (!recognitionRef.current || isAuraSpeakingRef.current) return;
     try {
       recognitionRef.current.start();
     } catch (e) {
@@ -444,6 +498,11 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
   const stopListening = useCallback(() => {
     isListeningRef.current = false;
     setIsListening(false);
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    accumulatedSpeechRef.current = "";
     setCurrentTranscript("");
     setAudioLevel(0);
     if (!recognitionRef.current) return;
@@ -460,6 +519,21 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
     }
   }, [startListening, stopListening]);
 
+  // Manually commit whatever has been spoken so far without waiting for silence timer
+  const commitCurrentSpeech = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    const textToCommit = currentTranscript.trim();
+    if (textToCommit && onSpeechResultRef.current) {
+      accumulatedSpeechRef.current = "";
+      setCurrentTranscript("");
+      setAudioLevel(0);
+      onSpeechResultRef.current(textToCommit);
+    }
+  }, [currentTranscript]);
+
   return {
     isSupported,
     isListening,
@@ -473,5 +547,6 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
     startListening,
     stopListening,
     toggleListening,
+    commitCurrentSpeech,
   };
 }
