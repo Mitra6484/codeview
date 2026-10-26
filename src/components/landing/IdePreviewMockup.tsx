@@ -4,7 +4,7 @@ import { Play, Sparkles, Video, Mic, CheckCircle2, Bot, Terminal, ShieldCheck, Z
 
 export default function IdePreviewMockup() {
   return (
-    <div className="relative w-full max-w-5xl mx-auto rounded-3xl p-2 sm:p-3 glass-card border border-white/15 shadow-[0_20px_70px_-15px_rgba(99,102,241,0.25)] overflow-hidden">
+    <div className="relative w-full max-w-5xl mx-auto rounded-3xl p-2 sm:p-3 glass-card border border-white/15 shadow-[0_20px_70px_-15px_rgba(99,102,241,0.25)] overflow-hidden text-left">
       {/* Decorative ambient top glow */}
       <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-to-b from-indigo-500/20 via-violet-500/10 to-transparent blur-3xl pointer-events-none" />
 
@@ -38,30 +38,90 @@ export default function IdePreviewMockup() {
       </div>
 
       {/* Main Workspace Body: Code Editor + Floating Video PIP + Copilot Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[460px] bg-slate-950/70 font-mono text-xs sm:text-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[460px] bg-slate-950/70 font-mono text-xs sm:text-sm text-left">
         {/* Left: Monaco-style Code View (8 cols) */}
-        <div className="lg:col-span-7 p-4 sm:p-6 overflow-x-auto border-b lg:border-b-0 lg:border-r border-white/10 relative">
-          <div className="space-y-1 leading-relaxed text-slate-300">
-            <p><span className="text-slate-600 select-none mr-4">01</span><span className="text-violet-400">from</span> collections <span className="text-violet-400">import</span> <span className="text-indigo-300 font-semibold">OrderedDict</span></p>
-            <p><span className="text-slate-600 select-none mr-4">02</span></p>
-            <p><span className="text-slate-600 select-none mr-4">03</span><span className="text-violet-400">class</span> <span className="text-indigo-300 font-semibold">LRUCache</span>:</p>
-            <p><span className="text-slate-600 select-none mr-4">04</span>    <span className="text-violet-400">def</span> <span className="text-blue-400">__init__</span>(self, capacity: <span className="text-emerald-400">int</span>):</p>
-            <p><span className="text-slate-600 select-none mr-4">05</span>        self.capacity = capacity</p>
-            <p><span className="text-slate-600 select-none mr-4">06</span>        self.cache: <span className="text-indigo-300">OrderedDict</span>[<span className="text-emerald-400">int</span>, <span className="text-emerald-400">int</span>] = OrderedDict()</p>
-            <p><span className="text-slate-600 select-none mr-4">07</span></p>
-            <p><span className="text-slate-600 select-none mr-4">08</span>    <span className="text-violet-400">def</span> <span className="text-blue-400">get</span>(self, key: <span className="text-emerald-400">int</span>) -&gt; <span className="text-emerald-400">int</span>:</p>
-            <p><span className="text-slate-600 select-none mr-4">09</span>        <span className="text-violet-400">if</span> key <span className="text-violet-400">not in</span> self.cache:</p>
-            <p><span className="text-slate-600 select-none mr-4">10</span>            <span className="text-violet-400">return</span> -<span className="text-amber-400">1</span></p>
-            <p><span className="text-slate-600 select-none mr-4">11</span>        self.cache.<span className="text-indigo-300">move_to_end</span>(key)</p>
-            <p><span className="text-slate-600 select-none mr-4">12</span>        <span className="text-violet-400">return</span> self.cache[key]</p>
-            <p><span className="text-slate-600 select-none mr-4">13</span></p>
-            <p><span className="text-slate-600 select-none mr-4">14</span>    <span className="text-violet-400">def</span> <span className="text-blue-400">put</span>(self, key: <span className="text-emerald-400">int</span>, value: <span className="text-emerald-400">int</span>) -&gt; <span className="text-violet-400">None</span>:</p>
-            <p><span className="text-slate-600 select-none mr-4">15</span>        <span className="text-violet-400">if</span> key <span className="text-violet-400">in</span> self.cache:</p>
-            <p><span className="text-slate-600 select-none mr-4">16</span>            self.cache.<span className="text-indigo-300">move_to_end</span>(key)</p>
-            <p><span className="text-slate-600 select-none mr-4">17</span>        self.cache[key] = value</p>
-            <p><span className="text-slate-600 select-none mr-4">18</span>        <span className="text-violet-400">if</span> len(self.cache) &gt; self.capacity:</p>
-            <p><span className="text-slate-600 select-none mr-4">19</span>            self.cache.<span className="text-indigo-300">popitem</span>(last=<span className="text-violet-400">False</span>)</p>
-            <p><span className="text-slate-600 select-none mr-4">20</span>        <span className="inline-block w-2 h-4 bg-indigo-400 animate-pulse ml-1 align-middle" /></p>
+        <div className="lg:col-span-7 p-4 sm:p-6 overflow-x-auto border-b lg:border-b-0 lg:border-r border-white/10 relative text-left">
+          <div className="space-y-0.5 leading-6 text-slate-300 font-mono text-xs sm:text-[13px] text-left">
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">01</span>
+              <span className="whitespace-pre flex-1 text-slate-200"><span className="text-violet-400">from</span> collections <span className="text-violet-400">import</span> <span className="text-indigo-300 font-semibold">OrderedDict</span></span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">02</span>
+              <span className="whitespace-pre flex-1 text-slate-200"></span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">03</span>
+              <span className="whitespace-pre flex-1 text-slate-200"><span className="text-violet-400">class</span> <span className="text-indigo-300 font-semibold">LRUCache</span>:</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">04</span>
+              <span className="whitespace-pre flex-1 text-slate-200">    <span className="text-violet-400">def</span> <span className="text-blue-400">__init__</span>(self, capacity: <span className="text-emerald-400">int</span>):</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">05</span>
+              <span className="whitespace-pre flex-1 text-slate-200">        self.capacity = capacity</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">06</span>
+              <span className="whitespace-pre flex-1 text-slate-200">        self.cache: <span className="text-indigo-300">OrderedDict</span>[<span className="text-emerald-400">int</span>, <span className="text-emerald-400">int</span>] = OrderedDict()</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">07</span>
+              <span className="whitespace-pre flex-1 text-slate-200"></span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">08</span>
+              <span className="whitespace-pre flex-1 text-slate-200">    <span className="text-violet-400">def</span> <span className="text-blue-400">get</span>(self, key: <span className="text-emerald-400">int</span>) -&gt; <span className="text-emerald-400">int</span>:</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">09</span>
+              <span className="whitespace-pre flex-1 text-slate-200">        <span className="text-violet-400">if</span> key <span className="text-violet-400">not in</span> self.cache:</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">10</span>
+              <span className="whitespace-pre flex-1 text-slate-200">            <span className="text-violet-400">return</span> -<span className="text-amber-400">1</span></span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">11</span>
+              <span className="whitespace-pre flex-1 text-slate-200">        self.cache.<span className="text-indigo-300">move_to_end</span>(key)</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">12</span>
+              <span className="whitespace-pre flex-1 text-slate-200">        <span className="text-violet-400">return</span> self.cache[key]</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">13</span>
+              <span className="whitespace-pre flex-1 text-slate-200"></span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">14</span>
+              <span className="whitespace-pre flex-1 text-slate-200">    <span className="text-violet-400">def</span> <span className="text-blue-400">put</span>(self, key: <span className="text-emerald-400">int</span>, value: <span className="text-emerald-400">int</span>) -&gt; <span className="text-violet-400">None</span>:</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">15</span>
+              <span className="whitespace-pre flex-1 text-slate-200">        <span className="text-violet-400">if</span> key <span className="text-violet-400">in</span> self.cache:</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">16</span>
+              <span className="whitespace-pre flex-1 text-slate-200">            self.cache.<span className="text-indigo-300">move_to_end</span>(key)</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">17</span>
+              <span className="whitespace-pre flex-1 text-slate-200">        self.cache[key] = value</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">18</span>
+              <span className="whitespace-pre flex-1 text-slate-200">        <span className="text-violet-400">if</span> len(self.cache) &gt; self.capacity:</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">19</span>
+              <span className="whitespace-pre flex-1 text-slate-200">            self.cache.<span className="text-indigo-300">popitem</span>(last=<span className="text-violet-400">False</span>)</span>
+            </div>
+            <div className="flex items-center hover:bg-white/[0.03] rounded px-1 -mx-1 group">
+              <span className="w-8 shrink-0 text-right pr-3 text-slate-600 select-none font-mono text-xs border-r border-white/10 mr-3 group-hover:text-slate-400">20</span>
+              <span className="whitespace-pre flex-1 text-slate-200">        <span className="inline-block w-2 h-4 bg-indigo-400 animate-pulse ml-0.5 align-middle" /></span>
+            </div>
           </div>
 
           {/* Embedded Terminal Output Drawer */}

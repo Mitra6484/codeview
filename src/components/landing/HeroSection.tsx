@@ -93,7 +93,7 @@ export default function HeroSection() {
         </div>
 
         {/* Embedded Interactive IDE Mockup Preview */}
-        <div id="ide-preview" className="pt-8 sm:pt-12 scroll-mt-24">
+        <div id="ide-preview" className="pt-8 sm:pt-12 scroll-mt-24 text-left">
           <IdePreviewMockup />
         </div>
       </div>
