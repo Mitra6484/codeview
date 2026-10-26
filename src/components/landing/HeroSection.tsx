@@ -12,26 +12,23 @@ export default function HeroSection() {
       <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
       <div className="max-w-6xl mx-auto text-center space-y-8">
-        {/* Animated Apple Glass Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-pill text-xs sm:text-sm font-medium text-indigo-300 shadow-lg shadow-indigo-500/10">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Next-Generation Technical Assessment Platform</span>
-          <span className="text-white/30">•</span>
-          <span className="text-slate-300 font-normal">5 Specialized AI Agents</span>
+        {/* Clean Engineering Badge */}
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-pill text-xs sm:text-sm font-medium text-slate-200 shadow-lg shadow-indigo-500/10">
+          <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
+          <span>Technical Interview & Engineering Assessment Platform</span>
         </div>
 
         {/* Hero Headline */}
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1] max-w-4xl mx-auto">
-          Conduct Technical Interviews{" "}
+          Technical interviews,{" "}
           <span className="bg-gradient-to-r from-indigo-400 via-violet-300 to-cyan-300 bg-clip-text text-transparent drop-shadow-sm">
-            with Autonomous Agents.
+            engineered for signal.
           </span>
         </h1>
 
         {/* Hero Subtitle */}
         <p className="max-w-3xl mx-auto text-base sm:text-xl text-slate-300/90 leading-relaxed font-normal">
-          Orchestrated by five specialized AI agents — <span className="text-white font-semibold">Aura</span> for voice mock interviews, <span className="text-white font-semibold">Nexus</span> for live co-pilot guidance, <span className="text-white font-semibold">Atlas</span> for architecture canvas audits, <span className="text-white font-semibold">Veritas</span> for executive scorecards, and <span className="text-white font-semibold">Genesis</span> for dynamic challenge synthesis.
+          Live collaborative Monaco coding, low-latency video, interactive system design canvas, voice-driven mock interviews, and objective evaluation scorecards.
         </p>
 
         {/* Primary Glass Action Buttons */}
@@ -75,23 +72,23 @@ export default function HeroSection() {
           </SignInButton>
         </div>
 
-        {/* Key Highlight Badges */}
+        {/* Key Platform Capabilities */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto pt-6 text-xs text-slate-300">
           <div className="glass-surface py-2.5 px-3 rounded-xl flex items-center justify-center gap-2">
             <Code className="w-4 h-4 text-indigo-400" />
-            <span>Monaco Editor Engine</span>
+            <span>Monaco Code Editor</span>
           </div>
           <div className="glass-surface py-2.5 px-3 rounded-xl flex items-center justify-center gap-2">
             <Video className="w-4 h-4 text-emerald-400" />
-            <span>Stream Ultra-Low Latency</span>
+            <span>WebRTC HD Video & Audio</span>
           </div>
           <div className="glass-surface py-2.5 px-3 rounded-xl flex items-center justify-center gap-2">
             <Cpu className="w-4 h-4 text-violet-400" />
-            <span>Multi-Agent AI Engine</span>
+            <span>System Design Whiteboard</span>
           </div>
           <div className="glass-surface py-2.5 px-3 rounded-xl flex items-center justify-center gap-2">
             <ShieldCheck className="w-4 h-4 text-cyan-400" />
-            <span>100% Free Open Models</span>
+            <span>Executive Scorecards</span>
           </div>
         </div>
 

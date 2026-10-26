@@ -20,7 +20,7 @@ export default function LandingNavbar() {
               Codeview
             </span>
             <span className="text-[9px] font-medium tracking-wider uppercase text-indigo-400/80 -mt-1">
-              AI Interview Platform
+              Technical Interview Platform
             </span>
           </div>
         </Link>
@@ -34,11 +34,10 @@ export default function LandingNavbar() {
             Live Workspace
           </a>
           <a
-            href="#agents"
-            className="hover:text-white transition-colors flex items-center gap-1.5"
+            href="#features"
+            className="hover:text-white transition-colors"
           >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span>5 AI Agents</span>
+            Platform Capabilities
           </a>
           <a
             href="#auth-section"

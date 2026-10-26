@@ -17,9 +17,8 @@ export default function AuthSection() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
             {/* Left Column: Value Prop */}
             <div className="lg:col-span-7 space-y-6 text-left">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-pill text-xs font-medium text-indigo-300">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Zero Setup Required • Free Tier Available</span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-pill text-xs font-medium text-slate-200">
+                <span>Streamlined Technical Assessment</span>
               </div>
 
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
@@ -30,7 +29,7 @@ export default function AuthSection() {
               </h2>
 
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-                Join engineering teams conducting structured, high-signal technical interviews with live Monaco coding, low-latency video, and continuous AI intelligence.
+                Join engineering teams conducting structured, high-signal technical interviews with live Monaco coding, low-latency video, and continuous evaluation telemetry.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs text-slate-300">
@@ -44,7 +43,7 @@ export default function AuthSection() {
                   <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
                     <Check className="w-3 h-3 stroke-[3]" />
                   </div>
-                  <span>Autonomous Multi-Agent Insights</span>
+                  <span>Live System Design Simulator</span>
                 </div>
                 <div className="flex items-center gap-2.5 glass-surface px-3.5 py-2.5 rounded-xl border border-white/5">
                   <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">

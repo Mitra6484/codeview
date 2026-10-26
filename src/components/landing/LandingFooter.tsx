@@ -23,18 +23,12 @@ export default function LandingFooter() {
           <a href="#ide-preview" className="hover:text-white transition-colors">
             IDE Workspace
           </a>
-          <a href="#agents" className="hover:text-white transition-colors">
-            5 AI Agents
+          <a href="#features" className="hover:text-white transition-colors">
+            Platform Capabilities
           </a>
           <a href="#auth-section" className="hover:text-white transition-colors">
             Get Started
           </a>
-        </div>
-
-        {/* Operational Badge */}
-        <div className="flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-[11px] text-slate-300">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>All Services Operational</span>
         </div>
       </div>
     </footer>

@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CodeView — AI-Native Technical Interview & Engineering Platform
 
-## Getting Started
+[![Next.js](https://img.shields.io/badge/Next.js-14_App_Router-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-18-blue?style=flat&logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![Convex](https://img.shields.io/badge/Convex-Realtime_Backend-orange?style=flat)](https://www.convex.dev/)
+[![Clerk](https://img.shields.io/badge/Clerk-Authentication-6C47FF?style=flat&logo=clerk)](https://clerk.com/)
+[![GetStream](https://img.shields.io/badge/Stream-WebRTC_Video-005FFF?style=flat&logo=stream)](https://getstream.io/)
 
-First, run the development server:
+> **CodeView** is a modern, AI-powered collaborative technical interviewing platform merging WebRTC video conferencing, multi-language sandbox execution, interactive system design canvas simulation, voice-driven AI mock interviews, and automated executive scorecards.
 
+---
+
+## 📖 Complete Project Flow & Architecture Guide
+
+For an in-depth breakdown of system architecture, sequence diagrams, database schemas, AI fallbacks, and user journey flowcharts, please refer to:
+
+👉 **[PROJECT_FLOW_AND_DESCRIPTION.md](./PROJECT_FLOW_AND_DESCRIPTION.md)**
+
+---
+
+## 🚀 Key Features
+
+- **Collaborative Coding Room (`/meeting/[id]`)**: Monaco Editor with real-time remote sync, test execution (JavaScript, Python, Java) via Piston API, and live interviewer hint dispatching.
+- **Aura AI Voice Mock Interview (`/mock-interview`)**: Conversational AI interviewer with real-time Speech Recognition (STT) and Voice Synthesis (TTS) powered by OpenRouter / Gemini.
+- **Interactive System Design Studio (`/system-design`)**: Freeform architecture canvas with 10+ cloud infrastructure components, 100k QPS live animated packet flow, protocol auto-inference, and AI architectural critiques.
+- **Interviewer Copilot & Executive Scorecards**: Real-time interviewer hints, scrutiny notes, radar skill charts, and automated hiring memos.
+- **AI Question Studio (`/dashboard/questions`)**: AI-assisted coding challenge generator producing test cases, constraints, and multi-language starter code.
+- **Dual-Persona Experience**: Seamless switching between **Candidate** and **Interviewer** roles.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 14 (App Router), React 18, Tailwind CSS, Framer Motion, Radix UI, Monaco Editor
+- **Backend & Database**: Convex (reactive serverless database with real-time subscriptions)
+- **Identity & Auth**: Clerk (OAuth, session management, user roles)
+- **Video & Audio**: GetStream Video React SDK & Node SDK
+- **Code Runner**: Piston Remote Execution API
+- **AI Intelligence**: OpenRouter (specialized free models) + Google Gemini API direct fallback
+
+---
+
+## 🏃 Getting Started
+
+### 1. Clone & Install Dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/codeview.git
+cd codeview
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configure Environment Variables
+Copy `.env.example` to `.env` and provide your API keys:
+```bash
+cp .env.example .env
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Ensure the following variables are defined:
+- `NEXT_PUBLIC_APP_URL`
+- `CONVEX_DEPLOYMENT` and `NEXT_PUBLIC_CONVEX_URL`
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`
+- `NEXT_PUBLIC_STREAM_API_KEY` and `STREAM_SECRET_KEY`
+- `OPENROUTER_API_KEY`
+- `GEMINI_API_KEY`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Run the Development Server
+```bash
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📜 Documentation Reference
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **[PROJECT_FLOW_AND_DESCRIPTION.md](./PROJECT_FLOW_AND_DESCRIPTION.md)**: Deep-dive architecture, sequence diagrams, ER diagrams, permission matrices, and security specifications.

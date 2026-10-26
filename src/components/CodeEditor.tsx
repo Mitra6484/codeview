@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useQuery } from "convex/react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
-import { LANGUAGES } from "@/constants"
+import { LANGUAGES, CODING_QUESTIONS } from "@/constants"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./ui/resizable"
 import { ScrollArea, ScrollBar } from "./ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
@@ -43,7 +43,25 @@ interface CodeEditorProps {
 function CodeEditor({ onAnalysisResult, onCodeChange, isInterviewer: propIsInterviewer, call }: CodeEditorProps) {
   const { isInterviewer: hookIsInterviewer } = useUserRole()
   const isInterviewer = propIsInterviewer !== undefined ? propIsInterviewer : hookIsInterviewer
-  const questions = useQuery(api.questions.getAllQuestions)
+  const rawQuestions = useQuery(api.questions.getAllQuestions)
+
+  // Resilient fallback: If database questions are cleared or empty, fall back to built-in coding challenges
+  const questions: Question[] | undefined = rawQuestions === undefined
+    ? undefined
+    : (rawQuestions.length > 0
+        ? rawQuestions
+        : CODING_QUESTIONS.map((cq) => ({
+            _id: cq.id as any,
+            _creationTime: 0,
+            title: cq.title,
+            description: cq.description,
+            examples: cq.examples,
+            starterCode: cq.starterCode,
+            constraints: cq.constraints || [],
+            supportedLanguages: ["javascript", "python", "java"],
+            createdBy: "system",
+          })))
+
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null)
   const [language, setLanguage] = useState<"javascript" | "python" | "java">(LANGUAGES[0].id)
   const [code, setCode] = useState("")

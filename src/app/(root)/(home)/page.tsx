@@ -106,7 +106,7 @@ function DashboardView() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-white tracking-tight">Candidate Actions</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Join scheduled calls or practice with autonomous AI agents</p>
+              <p className="text-xs text-slate-400 mt-0.5">Join scheduled calls or practice technical interview rounds</p>
             </div>
           </div>
 

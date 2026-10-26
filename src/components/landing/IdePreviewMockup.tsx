@@ -37,30 +37,31 @@ export default function IdePreviewMockup() {
         </div>
       </div>
 
-      {/* Main Workspace Body: Code Editor + Floating Video PIP + Nexus Co-Pilot Panel */}
+      {/* Main Workspace Body: Code Editor + Floating Video PIP + Copilot Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[460px] bg-slate-950/70 font-mono text-xs sm:text-sm">
         {/* Left: Monaco-style Code View (8 cols) */}
         <div className="lg:col-span-7 p-4 sm:p-6 overflow-x-auto border-b lg:border-b-0 lg:border-r border-white/10 relative">
           <div className="space-y-1 leading-relaxed text-slate-300">
-            <p><span className="text-slate-600 select-none mr-4">01</span><span className="text-violet-400">class</span> <span className="text-indigo-300 font-semibold">LRUCache</span>:</p>
-            <p><span className="text-slate-600 select-none mr-4">02</span>    <span className="text-violet-400">def</span> <span className="text-blue-400">__init__</span>(self, capacity: <span className="text-emerald-400">int</span>):</p>
-            <p><span className="text-slate-600 select-none mr-4">03</span>        self.cap = capacity</p>
-            <p><span className="text-slate-600 select-none mr-4">04</span>        self.cache = {} <span className="text-slate-500 italic"># key -&gt; Node</span></p>
-            <p><span className="text-slate-600 select-none mr-4">05</span>        self.left, self.right = Node(<span className="text-amber-400">0</span>, <span className="text-amber-400">0</span>), Node(<span className="text-amber-400">0</span>, <span className="text-amber-400">0</span>)</p>
-            <p><span className="text-slate-600 select-none mr-4">06</span>        self.left.next, self.right.prev = self.right, self.left</p>
+            <p><span className="text-slate-600 select-none mr-4">01</span><span className="text-violet-400">from</span> collections <span className="text-violet-400">import</span> <span className="text-indigo-300 font-semibold">OrderedDict</span></p>
+            <p><span className="text-slate-600 select-none mr-4">02</span></p>
+            <p><span className="text-slate-600 select-none mr-4">03</span><span className="text-violet-400">class</span> <span className="text-indigo-300 font-semibold">LRUCache</span>:</p>
+            <p><span className="text-slate-600 select-none mr-4">04</span>    <span className="text-violet-400">def</span> <span className="text-blue-400">__init__</span>(self, capacity: <span className="text-emerald-400">int</span>):</p>
+            <p><span className="text-slate-600 select-none mr-4">05</span>        self.capacity = capacity</p>
+            <p><span className="text-slate-600 select-none mr-4">06</span>        self.cache: <span className="text-indigo-300">OrderedDict</span>[<span className="text-emerald-400">int</span>, <span className="text-emerald-400">int</span>] = OrderedDict()</p>
             <p><span className="text-slate-600 select-none mr-4">07</span></p>
             <p><span className="text-slate-600 select-none mr-4">08</span>    <span className="text-violet-400">def</span> <span className="text-blue-400">get</span>(self, key: <span className="text-emerald-400">int</span>) -&gt; <span className="text-emerald-400">int</span>:</p>
-            <p><span className="text-slate-600 select-none mr-4">09</span>        <span className="text-violet-400">if</span> key <span className="text-violet-400">in</span> self.cache:</p>
-            <p><span className="text-slate-600 select-none mr-4">10</span>            self.<span className="text-indigo-300">_remove</span>(self.cache[key])</p>
-            <p><span className="text-slate-600 select-none mr-4">11</span>            self.<span className="text-indigo-300">_insert</span>(self.cache[key])</p>
-            <p><span className="text-slate-600 select-none mr-4">12</span>            <span className="text-violet-400">return</span> self.cache[key].val</p>
-            <p><span className="text-slate-600 select-none mr-4">13</span>        <span className="text-violet-400">return</span> -<span className="text-amber-400">1</span></p>
-            <p><span className="text-slate-600 select-none mr-4">14</span></p>
-            <p><span className="text-slate-600 select-none mr-4">15</span>    <span className="text-violet-400">def</span> <span className="text-blue-400">put</span>(self, key: <span className="text-emerald-400">int</span>, value: <span className="text-emerald-400">int</span>) -&gt; <span className="text-violet-400">None</span>:</p>
-            <p><span className="text-slate-600 select-none mr-4">16</span>        <span className="text-violet-400">if</span> key <span className="text-violet-400">in</span> self.cache: self.<span className="text-indigo-300">_remove</span>(self.cache[key])</p>
-            <p><span className="text-slate-600 select-none mr-4">17</span>        node = Node(key, value)</p>
-            <p><span className="text-slate-600 select-none mr-4">18</span>        self.cache[key] = node; self.<span className="text-indigo-300">_insert</span>(node)</p>
-            <p><span className="text-slate-600 select-none mr-4">19</span>        <span className="inline-block w-2 h-4 bg-indigo-400 animate-pulse ml-1 align-middle" /></p>
+            <p><span className="text-slate-600 select-none mr-4">09</span>        <span className="text-violet-400">if</span> key <span className="text-violet-400">not in</span> self.cache:</p>
+            <p><span className="text-slate-600 select-none mr-4">10</span>            <span className="text-violet-400">return</span> -<span className="text-amber-400">1</span></p>
+            <p><span className="text-slate-600 select-none mr-4">11</span>        self.cache.<span className="text-indigo-300">move_to_end</span>(key)</p>
+            <p><span className="text-slate-600 select-none mr-4">12</span>        <span className="text-violet-400">return</span> self.cache[key]</p>
+            <p><span className="text-slate-600 select-none mr-4">13</span></p>
+            <p><span className="text-slate-600 select-none mr-4">14</span>    <span className="text-violet-400">def</span> <span className="text-blue-400">put</span>(self, key: <span className="text-emerald-400">int</span>, value: <span className="text-emerald-400">int</span>) -&gt; <span className="text-violet-400">None</span>:</p>
+            <p><span className="text-slate-600 select-none mr-4">15</span>        <span className="text-violet-400">if</span> key <span className="text-violet-400">in</span> self.cache:</p>
+            <p><span className="text-slate-600 select-none mr-4">16</span>            self.cache.<span className="text-indigo-300">move_to_end</span>(key)</p>
+            <p><span className="text-slate-600 select-none mr-4">17</span>        self.cache[key] = value</p>
+            <p><span className="text-slate-600 select-none mr-4">18</span>        <span className="text-violet-400">if</span> len(self.cache) &gt; self.capacity:</p>
+            <p><span className="text-slate-600 select-none mr-4">19</span>            self.cache.<span className="text-indigo-300">popitem</span>(last=<span className="text-violet-400">False</span>)</p>
+            <p><span className="text-slate-600 select-none mr-4">20</span>        <span className="inline-block w-2 h-4 bg-indigo-400 animate-pulse ml-1 align-middle" /></p>
           </div>
 
           {/* Embedded Terminal Output Drawer */}
@@ -76,12 +77,12 @@ export default function IdePreviewMockup() {
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Test Suite passed (12 / 12 test assertions)</span>
               </p>
-              <p className="text-slate-400 text-[11px]">Runtime: 41ms • Memory: 14.8MB</p>
+              <p className="text-slate-400 text-[11px]">Runtime: 38ms • Memory: 14.2MB</p>
             </div>
           </div>
         </div>
 
-        {/* Right: Floating Glass Video PIP + Nexus Co-Pilot Intelligence Panel (5 cols) */}
+        {/* Right: Floating Glass Video PIP + Copilot Panel (5 cols) */}
         <div className="lg:col-span-5 p-4 sm:p-5 flex flex-col gap-4 font-sans bg-slate-950/40">
           {/* Glass Video Feeds */}
           <div className="grid grid-cols-2 gap-3">
@@ -124,7 +125,7 @@ export default function IdePreviewMockup() {
             </div>
           </div>
 
-          {/* Nexus AI Co-Pilot Intelligence Card */}
+          {/* Interviewer Copilot Intelligence Card */}
           <div className="flex-1 rounded-2xl glass-card border border-indigo-500/20 bg-gradient-to-b from-indigo-950/20 to-slate-950/60 p-4 flex flex-col justify-between shadow-[0_4px_24px_rgba(99,102,241,0.12)]">
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -133,8 +134,8 @@ export default function IdePreviewMockup() {
                     <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-semibold text-white">Nexus Co-Pilot Radar</h4>
-                    <p className="text-[10px] text-slate-400">Real-time AST & Progressive Nudges</p>
+                    <h4 className="text-xs font-semibold text-white">Interviewer Copilot</h4>
+                    <p className="text-[10px] text-slate-400">Live Complexity & AST Analysis</p>
                   </div>
                 </div>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-semibold">
@@ -146,7 +147,7 @@ export default function IdePreviewMockup() {
               <div className="grid grid-cols-2 gap-2 my-2 text-xs">
                 <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5">
                   <span className="text-[10px] text-slate-400 block">Time Complexity</span>
-                  <span className="font-mono font-semibold text-indigo-300">O(1) Avg</span>
+                  <span className="font-mono font-semibold text-indigo-300">O(1) Get / Put</span>
                 </div>
                 <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5">
                   <span className="text-[10px] text-slate-400 block">Space Complexity</span>
@@ -156,13 +157,13 @@ export default function IdePreviewMockup() {
 
               <div className="mt-2.5 p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-slate-300 leading-relaxed">
                 <span className="text-indigo-400 font-semibold block mb-0.5 flex items-center gap-1">
-                  <Zap className="w-3 h-3 text-indigo-400" /> AI Feedback Summary
+                  <Zap className="w-3 h-3 text-indigo-400" /> Algorithmic Analysis
                 </span>
-                Doubly-linked list with hash map provides optimal O(1) eviction. Clean implementation with robust edge case handling.
+                Canonical OrderedDict implementation maintains key access order with O(1) lookup and eviction. Fully satisfies capacity constraints.
               </div>
             </div>
 
-            {/* Interviewer Decision Status Bar */}
+            {/* Decision Status Bar */}
             <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
               <span className="text-slate-400 text-[11px] flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Plagiarism Check: Clean
@@ -176,6 +177,7 @@ export default function IdePreviewMockup() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }
