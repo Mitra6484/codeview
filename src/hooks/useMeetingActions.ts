@@ -7,32 +7,35 @@ const useMeetingActions = () => {
   const client = useStreamVideoClient();
 
   const createInstantMeeting = async () => {
-    if (!client) return;
-
     try {
       const id = crypto.randomUUID();
-      const call = client.call("default", id);
 
-      await call.getOrCreate({
-        data: {
-          starts_at: new Date().toISOString(),
-          custom: {
-            description: "Instant Meeting",
+      if (client) {
+        const call = client.call("default", id);
+        await call.getOrCreate({
+          data: {
+            starts_at: new Date().toISOString(),
+            custom: {
+              description: "Instant Meeting",
+            },
           },
-        },
-      });
+        });
+      }
 
-      router.push(`/meeting/${call.id}`);
-      toast.success("Meeting Created");
+      router.push(`/meeting/${id}`);
+      toast.success("Instant Meeting Created");
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to create meeting");
+      console.error("Meeting creation error:", error);
+      toast.error("Failed to create meeting room");
     }
   };
 
   const joinMeeting = (callId: string) => {
-    if (!client) return toast.error("Failed to join meeting. Please try again.");
-    router.push(`/meeting/${callId}`);
+    if (!callId.trim()) {
+      return toast.error("Please enter a valid meeting ID or link.");
+    }
+    const cleanId = callId.trim().split("/").pop() || callId.trim();
+    router.push(`/meeting/${cleanId}`);
   };
 
   return { createInstantMeeting, joinMeeting };

@@ -225,5 +225,62 @@
   .sim-traffic-flowing {
     animation: simLineFlow 0.6s linear infinite;
   }
+
+  /* Shimmer sweep animation for premium cards and badges */
+  @keyframes shimmerSweep {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .animate-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      transparent 100%
+    );
+    animation: shimmerSweep 2.5s infinite;
+    pointer-events: none;
+  }
+
+  /* Gentle floating animation for orbs and badges */
+  @keyframes gentleFloat {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  .animate-float {
+    animation: gentleFloat 4s ease-in-out infinite;
+  }
+
+  /* Pulsing glow bloom for active interviewers & visualizer */
+  @keyframes pulseGlow {
+    0%, 100% {
+      box-shadow: 0 0 20px 0 rgba(99, 102, 241, 0.25);
+    }
+    50% {
+      box-shadow: 0 0 35px 6px rgba(99, 102, 241, 0.45);
+    }
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 3s ease-in-out infinite;
+  }
 }
 

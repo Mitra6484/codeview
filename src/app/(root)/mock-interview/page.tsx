@@ -25,6 +25,12 @@ import {
   ShieldCheck,
   Send,
   CornerDownLeft,
+  HeartHandshake,
+  Layers,
+  Zap,
+  Sliders,
+  ChevronDown,
+  UserCheck,
 } from "lucide-react";
 import { CODING_QUESTIONS, LANGUAGES } from "@/constants";
 import { useVoiceInterview } from "@/hooks/useVoiceInterview";
@@ -33,9 +39,12 @@ import {
   evaluateMockInterviewSession,
   VoiceTurnResponse,
   MockSessionEvaluationResponse,
+  AURA_PERSONAS,
+  AuraPersonaId,
 } from "@/actions/ai/voice-mock-agent";
 import { executeCode, ExecuteCodeResult } from "@/actions/execute-code";
 import LoaderUI from "@/components/LoaderUI";
+import toast from "react-hot-toast";
 
 export default function MockInterviewPage() {
   const router = useRouter();
@@ -44,6 +53,10 @@ export default function MockInterviewPage() {
   const [selectedQuestion, setSelectedQuestion] = useState(CODING_QUESTIONS[0]);
   const [language, setLanguage] = useState<"javascript" | "python" | "java">("python");
   const [code, setCode] = useState<string>("");
+
+  // AI Interviewer Persona State
+  const [selectedPersonaId, setSelectedPersonaId] = useState<AuraPersonaId>("bar-raiser");
+  const activePersona = AURA_PERSONAS[selectedPersonaId] || AURA_PERSONAS["bar-raiser"];
 
   // Code Execution State
   const [isExecuting, setIsExecuting] = useState(false);
@@ -70,6 +83,7 @@ export default function MockInterviewPage() {
 
   const [showScorecard, setShowScorecard] = useState(false);
   const [manualInput, setManualInput] = useState("");
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
 
   // Sync starter code
   useEffect(() => {
@@ -99,6 +113,12 @@ export default function MockInterviewPage() {
     currentTranscript,
     audioLevel,
     currentEmotion,
+    activeVoiceName,
+    availableVoices,
+    selectedVoiceURI,
+    setSelectedVoiceURI,
+    speechRateMultiplier,
+    setSpeechRateMultiplier,
     speak,
     stopSpeaking,
     toggleListening,
@@ -120,10 +140,10 @@ export default function MockInterviewPage() {
     if (hasSpokenWelcomeRef.current && !force) return;
     hasSpokenWelcomeRef.current = true;
 
-    const welcomeMsg = `Hi there! I'm Aura, your interviewer today... We'll be working on ${selectedQuestion.title} together. Whenever you're ready, take your time and talk me through how you'd like to approach it!`;
+    const welcomeMsg = activePersona.greeting(selectedQuestion.title);
 
     setConversationHistory((prev) => {
-      // Don't add duplicate if the first message is already Aura's intro
+      // Don't add duplicate if the first message is already the intro
       if (!force && prev.length > 0 && prev[0].role === "model") return prev;
       return [
         {
@@ -137,7 +157,24 @@ export default function MockInterviewPage() {
 
     speak(welcomeMsg, "encouraging");
     startListening();
-  }, [selectedQuestion.title, speak, startListening]);
+  }, [activePersona, selectedQuestion.title, speak, startListening]);
+
+  // Handle switching interviewer persona
+  const handleSelectPersona = (id: AuraPersonaId) => {
+    setSelectedPersonaId(id);
+    const p = AURA_PERSONAS[id];
+    toast.success(`Interviewer switched to ${p.name} (${p.title})`);
+    const welcome = p.greeting(selectedQuestion.title);
+    setConversationHistory((prev) => [
+      ...prev,
+      {
+        role: "model",
+        text: welcome,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+    ]);
+    speak(welcome, "encouraging");
+  };
 
   // Handle question change
   useEffect(() => {
@@ -201,6 +238,7 @@ export default function MockInterviewPage() {
         questionTitle: selectedQuestion.title,
         questionDescription: selectedQuestion.description,
         history: updatedHistory.map((h) => ({ role: h.role, text: h.text })),
+        personaId: selectedPersonaId,
       });
 
       setAiState(response);
@@ -325,8 +363,18 @@ export default function MockInterviewPage() {
                 : "bg-slate-500"
             }`}
           />
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-          <span className="font-semibold text-white">Aura</span>
+          {selectedPersonaId === "mentor" ? (
+            <HeartHandshake className="w-3.5 h-3.5 text-emerald-400" />
+          ) : selectedPersonaId === "architect" ? (
+            <Layers className="w-3.5 h-3.5 text-cyan-400" />
+          ) : selectedPersonaId === "speed-coder" ? (
+            <Zap className="w-3.5 h-3.5 text-amber-400" />
+          ) : (
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          )}
+          <span className="font-semibold text-white">{activePersona.name}</span>
+          <span className="text-white/20">•</span>
+          <span className="text-[11px] text-slate-400 font-mono hidden lg:inline">{activePersona.badge}</span>
           <span className="text-white/20">•</span>
           <span
             className={`capitalize font-semibold text-[11px] px-2 py-0.5 rounded-full ${
@@ -470,34 +518,98 @@ export default function MockInterviewPage() {
         {/* RIGHT PANE: Voice AI Chamber (5 cols) */}
         <div className="lg:col-span-5 flex flex-col bg-slate-950/80">
           {/* AI VOICE AVATAR & SOUND WAVE VISUALIZER */}
-          <div className="p-6 border-b border-white/10 glass-card m-3 rounded-2xl relative overflow-hidden flex flex-col items-center text-center">
-            {/* Ambient Background Glow */}
+          <div className="p-5 border-b border-white/10 glass-card m-3 rounded-2xl relative overflow-hidden flex flex-col items-center text-center">
+            {/* Ambient Background Glow matching persona */}
             <div
               className={`absolute inset-0 bg-gradient-to-b ${
-                isSpeaking
-                  ? "from-emerald-500/20 to-transparent"
-                  : isListening
-                  ? "from-indigo-500/20 to-transparent"
-                  : "from-white/5 to-transparent"
+                selectedPersonaId === "mentor"
+                  ? isSpeaking ? "from-emerald-500/25 to-transparent" : "from-emerald-500/10 to-transparent"
+                  : selectedPersonaId === "architect"
+                  ? isSpeaking ? "from-cyan-500/25 to-transparent" : "from-cyan-500/10 to-transparent"
+                  : selectedPersonaId === "speed-coder"
+                  ? isSpeaking ? "from-amber-500/25 to-transparent" : "from-amber-500/10 to-transparent"
+                  : isSpeaking ? "from-indigo-500/25 to-transparent" : "from-indigo-500/10 to-transparent"
               } transition-all duration-500 pointer-events-none`}
             />
 
+            {/* PERSONA SELECTOR SEGMENTED BAR */}
+            <div className="w-full mb-4 p-1 rounded-xl bg-white/[0.04] border border-white/10 grid grid-cols-4 gap-1 text-[11px] font-medium z-10">
+              {(Object.keys(AURA_PERSONAS) as AuraPersonaId[]).map((pid) => {
+                const p = AURA_PERSONAS[pid];
+                const isSelected = selectedPersonaId === pid;
+                return (
+                  <button
+                    key={pid}
+                    type="button"
+                    onClick={() => handleSelectPersona(pid)}
+                    className={`py-1.5 px-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      isSelected
+                        ? pid === "mentor"
+                          ? "bg-emerald-600 text-white font-semibold shadow-md shadow-emerald-500/25"
+                          : pid === "architect"
+                          ? "bg-cyan-600 text-white font-semibold shadow-md shadow-cyan-500/25"
+                          : pid === "speed-coder"
+                          ? "bg-amber-600 text-white font-semibold shadow-md shadow-amber-500/25"
+                          : "bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-500/25"
+                        : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                    }`}
+                  >
+                    {pid === "mentor" ? (
+                      <HeartHandshake className="w-3 h-3" />
+                    ) : pid === "architect" ? (
+                      <Layers className="w-3 h-3" />
+                    ) : pid === "speed-coder" ? (
+                      <Zap className="w-3 h-3" />
+                    ) : (
+                      <Sparkles className="w-3 h-3" />
+                    )}
+                    <span className="truncate">{p.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Glowing Avatar Orb with Equalizer Bars */}
-            <div className="relative mb-3">
+            <div className="relative mb-3 z-10">
               <div
-                className={`w-20 h-20 rounded-full flex items-center justify-center border transition-all duration-300 ${
+                className={`w-20 h-20 rounded-full flex items-center justify-center border transition-all duration-300 relative ${
                   isSpeaking
-                    ? "bg-emerald-500/20 border-emerald-400/50 shadow-[0_0_35px_rgba(16,185,129,0.35)] scale-105"
+                    ? "bg-indigo-500/25 border-indigo-400 shadow-[0_0_40px_rgba(99,102,241,0.5)] scale-105"
                     : isListening
-                    ? "bg-indigo-500/20 border-indigo-400/50 shadow-[0_0_35px_rgba(99,102,241,0.35)] scale-100"
+                    ? "bg-emerald-500/25 border-emerald-400 shadow-[0_0_40px_rgba(16,185,129,0.4)] scale-100"
                     : "bg-white/5 border-white/10"
                 }`}
               >
-                <Bot
-                  className={`w-9 h-9 transition-colors ${
-                    isSpeaking ? "text-emerald-400" : isListening ? "text-indigo-400" : "text-slate-400"
-                  }`}
-                />
+                {/* Orbiting ring */}
+                <div className={`absolute inset-[-6px] rounded-full border border-dashed ${
+                  isSpeaking ? "border-indigo-400/60 animate-spin" : isListening ? "border-emerald-400/60 animate-spin" : "border-white/10"
+                }`} style={{ animationDuration: "12s" }} />
+
+                {selectedPersonaId === "mentor" ? (
+                  <HeartHandshake
+                    className={`w-9 h-9 transition-colors ${
+                      isSpeaking ? "text-emerald-300" : isListening ? "text-emerald-400" : "text-slate-300"
+                    }`}
+                  />
+                ) : selectedPersonaId === "architect" ? (
+                  <Layers
+                    className={`w-9 h-9 transition-colors ${
+                      isSpeaking ? "text-cyan-300" : isListening ? "text-cyan-400" : "text-slate-300"
+                    }`}
+                  />
+                ) : selectedPersonaId === "speed-coder" ? (
+                  <Zap
+                    className={`w-9 h-9 transition-colors ${
+                      isSpeaking ? "text-amber-300" : isListening ? "text-amber-400" : "text-slate-300"
+                    }`}
+                  />
+                ) : (
+                  <Sparkles
+                    className={`w-9 h-9 transition-colors ${
+                      isSpeaking ? "text-indigo-300" : isListening ? "text-indigo-400" : "text-slate-300"
+                    }`}
+                  />
+                )}
               </div>
 
               {/* Pulsing Audio Frequency Waves */}
@@ -511,21 +623,31 @@ export default function MockInterviewPage() {
               )}
             </div>
 
-            {/* AI Status Voice Indicator */}
-            <h3 className="text-base font-bold text-white tracking-tight">Aura</h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {isSpeaking
-                ? "Aura is speaking to you..."
-                : isAiProcessing
-                ? "Aura is thinking..."
-                : isListening
-                ? "Listening to your voice... Speak anytime"
-                : "Microphone paused. Click to speak."}
-            </p>
+            {/* AI Status Voice Indicator & Bio Card */}
+            <div className="space-y-1 z-10 w-full max-w-sm">
+              <div className="flex items-center justify-center gap-2">
+                <h3 className="text-base font-bold text-white tracking-tight">{activePersona.name}</h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-400/30 text-indigo-300 font-semibold">
+                  {activePersona.badge}
+                </span>
+              </div>
+              <p className="text-xs text-indigo-300/90 font-medium">{activePersona.title}</p>
+              <p className="text-[11px] text-slate-400 max-w-xs mx-auto leading-relaxed">
+                {activePersona.tagline}
+              </p>
+              <div className="pt-1 flex items-center justify-center gap-2 text-[10px] text-slate-400 font-mono">
+                <span className="px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/10 truncate max-w-[180px]">
+                  🎙️ {activeVoiceName}
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/10">
+                  {speechRateMultiplier}x Cadence
+                </span>
+              </div>
+            </div>
 
             {/* Real-time Subtitle / Live Transcript bubble */}
             {currentTranscript && (
-              <div className="mt-3 flex items-center gap-2 max-w-sm px-1">
+              <div className="mt-3 flex items-center gap-2 max-w-sm px-1 z-10">
                 <div className="flex-1 px-3.5 py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 italic truncate">
                   "{currentTranscript}"
                 </div>
@@ -542,14 +664,39 @@ export default function MockInterviewPage() {
             )}
 
             {!isSupported && (
-              <div className="mt-2 text-[11px] text-amber-300/90 flex items-center gap-1.5 bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">
+              <div className="mt-2 text-[11px] text-amber-300/90 flex items-center gap-1.5 bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20 z-10">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
                 <span>Microphone voice API not supported in this browser. Text interaction is active below!</span>
               </div>
             )}
 
+            {/* Quick Socratic Prompts */}
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 z-10">
+              <button
+                type="button"
+                onClick={() => handleCandidateSpoke("Can you give me a subtle hint or edge case to think about?")}
+                className="px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[10px] text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                💡 Ask for Hint
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCandidateSpoke("What is the expected time and space complexity?")}
+                className="px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[10px] text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                ⏱️ Check Big-O
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCandidateSpoke("What edge cases should I test against?")}
+                className="px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[10px] text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                🛡️ Edge Cases
+              </button>
+            </div>
+
             {/* Mic & Voice Controls */}
-            <div className="mt-4 flex items-center justify-center gap-2.5">
+            <div className="mt-4 flex items-center justify-center gap-2.5 z-10">
               <button
                 onClick={toggleListening}
                 className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all ${
@@ -565,9 +712,22 @@ export default function MockInterviewPage() {
               <button
                 onClick={() => triggerAuraGreeting(true)}
                 className="p-2 rounded-xl glass-btn-secondary text-slate-300 hover:text-white transition-colors cursor-pointer"
-                title="Replay Aura's Greeting & Problem Introduction"
+                title={`Replay ${activePersona.name}'s Introduction`}
               >
                 <Volume2 className="w-4 h-4 text-indigo-400" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowVoiceSettings((v) => !v)}
+                className={`p-2 rounded-xl transition-colors cursor-pointer border ${
+                  showVoiceSettings
+                    ? "bg-indigo-500/20 border-indigo-400/40 text-indigo-300"
+                    : "glass-btn-secondary text-slate-300 hover:text-white"
+                }`}
+                title="Voice Selector & Speech Cadence Settings"
+              >
+                <Sliders className="w-4 h-4" />
               </button>
 
               {isSpeaking && (
@@ -580,6 +740,75 @@ export default function MockInterviewPage() {
                 </button>
               )}
             </div>
+
+            {/* Expandable Voice Selector & Speech Cadence Drawer */}
+            {showVoiceSettings && (
+              <div className="mt-3 w-full max-w-sm p-3 rounded-xl bg-slate-900/90 border border-white/15 text-left space-y-2.5 z-10 animate-in fade-in slide-in-from-top-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-white flex items-center gap-1.5">
+                    <Sliders className="w-3 h-3 text-indigo-400" />
+                    <span>Voice Synthesis & Cadence</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowVoiceSettings(false)}
+                    className="text-[10px] text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400 font-mono block">Select Neural Voice</label>
+                  <select
+                    value={selectedVoiceURI}
+                    onChange={(e) => {
+                      setSelectedVoiceURI(e.target.value);
+                      toast.success("Updated interviewer voice profile");
+                    }}
+                    className="w-full glass-input px-2.5 py-1.5 rounded-lg text-[11px] text-white bg-slate-950 cursor-pointer"
+                  >
+                    {availableVoices.length > 0 ? (
+                      availableVoices.map((v) => (
+                        <option key={v.voiceURI} value={v.voiceURI} className="bg-slate-950 text-white">
+                          {v.name} ({v.lang})
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">Calibrated Natural Voice (Default)</option>
+                    )}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-mono">
+                    <span className="text-slate-400">Speech Cadence</span>
+                    <span className="text-indigo-300 font-bold">{speechRateMultiplier}x</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1">
+                    {[
+                      { label: "Relaxed (0.85x)", val: 0.85 },
+                      { label: "Natural (1.0x)", val: 1.0 },
+                      { label: "Brisk (1.1x)", val: 1.1 },
+                      { label: "Fast (1.2x)", val: 1.2 },
+                    ].map((opt) => (
+                      <button
+                        key={opt.val}
+                        type="button"
+                        onClick={() => setSpeechRateMultiplier(opt.val)}
+                        className={`py-1 px-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer border ${
+                          speechRateMultiplier === opt.val
+                            ? "bg-indigo-600 border-indigo-400 text-white font-semibold"
+                            : "bg-white/5 border-white/5 text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        {opt.val}x
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* TABS: Problem / Transcript / Insights */}

@@ -1,6 +1,6 @@
 "use server";
 
-import { callAi } from "@/lib/ai-provider";
+import { callAi, extractCleanJson } from "@/lib/ai-provider";
 
 export interface GenerateQuestionInput {
   role?: string;
@@ -91,12 +91,7 @@ Generate an original, professional coding challenge matching this criteria in va
       jsonMode: true,
     });
 
-    let jsonStr = aiRes.text.trim();
-    const jsonMatch = jsonStr.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-    if (jsonMatch && jsonMatch[1]) {
-      jsonStr = jsonMatch[1];
-    }
-
+    const jsonStr = extractCleanJson(aiRes.text);
     const parsed = JSON.parse(jsonStr) as GeneratedQuestionResponse;
     return {
       ...parsed,

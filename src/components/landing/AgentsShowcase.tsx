@@ -1,8 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Mic, Bot, Network, Award, Sparkles, ArrowRight, CheckCircle2, ChevronRight, Zap } from "lucide-react";
+import {
+  Mic,
+  Bot,
+  Network,
+  Award,
+  Sparkles,
+  ArrowRight,
+  CheckCircle2,
+  ChevronRight,
+  Zap,
+  HeartHandshake,
+  Layers,
+  Volume2,
+  ShieldCheck,
+  Code2,
+} from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 interface Feature {
   id: string;
@@ -26,36 +42,88 @@ interface Feature {
 }
 
 export default function AgentsShowcase() {
+  const auraPersonas = [
+    {
+      id: "aura",
+      name: "Aura",
+      title: "Principal FAANG Bar Raiser",
+      badge: "L7 Rigor",
+      icon: Sparkles,
+      accent: "from-indigo-500 to-violet-600",
+      textColor: "text-indigo-400",
+      borderColor: "border-indigo-500/30",
+      style: "Probes asymptotic Big-O optimality, tricky invariants, and boundary conditions.",
+      sample: '"Your two-pointer traversal is O of N, which is optimal. How does your loop invariant hold if all array values are negative?"',
+    },
+    {
+      id: "alex",
+      name: "Alex",
+      title: "Empathetic Staff Mentor",
+      badge: "Socratic Coach",
+      icon: HeartHandshake,
+      accent: "from-emerald-500 to-teal-600",
+      textColor: "text-emerald-400",
+      borderColor: "border-emerald-500/30",
+      style: "Builds psychological safety with calm, incremental Socratic nudges when you feel stuck.",
+      sample: '"Take a deep breath—no rush at all! Let\'s start by tracing what happens to the window sum on the very first 3 elements."',
+    },
+    {
+      id: "elena",
+      name: "Elena",
+      title: "Staff Systems Architect",
+      badge: "Production Scale",
+      icon: Layers,
+      accent: "from-cyan-500 to-blue-600",
+      textColor: "text-cyan-400",
+      borderColor: "border-cyan-500/30",
+      style: "Evaluates modular abstraction, memory footprint, and concurrency under production load.",
+      sample: '"Clean separation of concerns. If this service processes 100k requests per second, where would memory allocations bottleneck?"',
+    },
+    {
+      id: "kai",
+      name: "Kai",
+      title: "Speed-Run Coding Coach",
+      badge: "Rapid Execution",
+      icon: Zap,
+      accent: "from-amber-500 to-orange-600",
+      textColor: "text-amber-400",
+      borderColor: "border-amber-500/30",
+      style: "High-energy pattern recognition focused on rapid test-driven debugging and speed.",
+      sample: '"Classic sliding window pattern! Let\'s get a baseline passing the test suite in 3 minutes and then optimize space."',
+    },
+  ];
+
   const features: Feature[] = [
     {
       id: "voice-mock",
-      name: "Voice Mock Practice",
-      role: "Conversational Interviewer",
-      badge: "Real-Time Bi-Directional Audio",
+      name: "Aura — AI Voice Interviewer",
+      role: "Autonomous Technical Bar Raiser & Voice Coach",
+      badge: "4 Selectable Personas • Voice AI",
       accent: "from-indigo-500 to-indigo-600",
       glow: "text-indigo-400",
       borderGlow: "hover:border-indigo-400/50 hover:shadow-[0_0_35px_rgba(99,102,241,0.25)]",
-      icon: Mic,
-      headline: "Conversational mock interviews with real-time speech and adaptive hints",
+      icon: Sparkles,
+      headline: "Conversational mock interviews with FAANG-calibrated voice personas and Socratic hints",
       description:
-        "Practice out loud with natural voice dialogue, explain your thought process, and receive supportive, targeted feedback on time complexity and edge cases without interview pressure.",
+        "Select your interviewer: from Aura (Principal Bar Raiser) and Alex (Empathetic Mentor) to Elena (Systems Architect) and Kai (Speed Coach). Practice out loud with real-time speech dialogue, customize neural voice cadence, and receive targeted feedback on Big-O trade-offs.",
       skills: [
-        "Natural speech synthesis & voice input transcription",
-        "Adaptive hints when candidate pauses or gets stuck",
-        "Monaco code editor with sandboxed test runners",
+        "4 Calibrated Personas: Principal Bar Raiser, Empathetic Mentor, Systems Architect, Speed Coach",
+        "Custom neural voice selector & adjustable speech cadence (0.85x–1.2x)",
+        "Real-time echo suppression, silence detection, and emotional prosody",
+        "Calibrated post-session scorecard that never inflates unimplemented code",
       ],
       sampleOutput: {
-        label: "AI Voice Interviewer",
-        text: '"Great intuition on using a two-pointer approach! Before coding, how might duplicate elements affect your inner while-loop condition?"',
-        badge: "Voice Session Active",
+        label: "Aura • Principal Bar Raiser",
+        text: '"Great intuition on using a two-pointer approach! Before coding, how might duplicate elements affect your inner while-loop boundary condition?"',
+        badge: "Aura Active • L7 Standard",
       },
       link: "/mock-interview",
-      ctaText: "Start Voice Practice",
+      ctaText: "Practice with Aura",
     },
     {
       id: "copilot",
-      name: "Live Interview Copilot",
-      role: "In-Meeting Interviewer Assistant",
+      name: "Nexus — Live Interview Copilot",
+      role: "In-Meeting Interviewer Intelligence",
       badge: "Private Interviewer Drawer",
       accent: "from-violet-500 to-purple-600",
       glow: "text-violet-400",
@@ -63,15 +131,16 @@ export default function AgentsShowcase() {
       icon: Bot,
       headline: "Non-intrusive interviewer intelligence delivering progressive hints and Big-O radar",
       description:
-        "Operates quietly in the interviewer's private drawer during live calls, streaming real-time AST syntax analysis, detecting algorithmic pitfalls, and generating 3-tier progressive hints.",
+        "Operates quietly in the interviewer's private drawer during live WebRTC calls, streaming real-time AST syntax analysis, detecting algorithmic pitfalls, and dispatching 3-tier progressive hints directly to the candidate's screen.",
       skills: [
         "Real-time Big-O time and space complexity detection",
-        "3-Tier progressive hints: Nudge, Structure, and Vector",
-        "Contextual technical follow-up questions",
+        "1-Click dispatch of Tier-1 Nudge, Tier-2 Structural, or Tier-3 Vector hints",
+        "Contextual follow-up questions tailored to the candidate's exact code",
+        "Live code authenticity & plagiarism pattern verification",
       ],
       sampleOutput: {
-        label: "Copilot Signal",
-        text: "Candidate current loop is O(N²). Recommend Tier-1 Nudge: Ask how a hash map could optimize the second look-up pass to O(1).",
+        label: "Nexus Copilot Signal",
+        text: "Candidate current loop is O(N²). Recommend dispatching Tier-1 Nudge: Ask how an auxiliary hash map could reduce lookup time to O(1).",
         badge: "Private to Interviewer",
       },
       link: "/schedule",
@@ -79,49 +148,51 @@ export default function AgentsShowcase() {
     },
     {
       id: "system-design",
-      name: "System Design Studio",
-      role: "Architecture Whiteboard & Simulation",
-      badge: "Interactive Canvas & Simulation",
+      name: "Atlas — System Design Simulator",
+      role: "Continuous Traffic & Chaos Engineering Studio",
+      badge: "1k–500k QPS Live Engine",
       accent: "from-cyan-500 to-blue-600",
       glow: "text-cyan-400",
       borderGlow: "hover:border-cyan-400/50 hover:shadow-[0_0_35px_rgba(6,182,212,0.25)]",
       icon: Network,
-      headline: "Real-time topology evaluator simulating 100k+ QPS loads and failure modes",
+      headline: "Interactive cloud topology canvas with continuous packet flow and chaos fault injection",
       description:
-        "Design distributed architectures directly on an interactive SVG canvas. Connect load balancers, caching layers, and database clusters while the engine simulates traffic spikes and audits bottlenecks.",
+        "Design distributed architectures with 10+ cloud primitives or load production presets. Slide traffic from 1k to 500k QPS, inject chaos faults (kill Redis, saturate DB pools, induce cross-zone lag), and run Atlas AI audits.",
       skills: [
-        "Interactive node & connection topology canvas",
-        "Real-time 100k QPS load & bottleneck simulation",
-        "Single-point-of-failure (SPOF) and partition tolerance critique",
+        "Continuous live packet animation & per-node CPU/RAM/QPS HUD",
+        "Interactive QPS load slider (1,000 to 500,000 QPS)",
+        "Chaos Engineering: Inject Redis crashes, DB pool exhaustion, or CDN bypass",
+        "1-Click Presets: 3-Tier Web, E-Commerce Microservices, Video Streaming, Chat Mesh",
       ],
       sampleOutput: {
-        label: "Architecture Simulation Report",
-        text: "Redis cluster missing replication replicas. At 100,000 QPS, primary cache eviction triggers database connection pool exhaustion.",
-        badge: "Bottleneck Detected",
+        label: "Atlas Chaos Telemetry",
+        text: "FAULT INJECTED: Redis Cluster offline at 250,000 QPS. Cache hit ratio dropped to 0%, spiking PostgreSQL Primary to 100% CPU lockup.",
+        badge: "Chaos Test Active",
       },
       link: "/system-design",
       ctaText: "Open System Canvas",
     },
     {
       id: "scorecard",
-      name: "Executive Scorecards",
-      role: "Standardized Rubric Grading",
-      badge: "Calibrated Hiring Memo",
+      name: "Veritas — Executive Scorecards",
+      role: "Calibrated 5-Dimension Rubric Engine",
+      badge: "Unbiased Hiring Memo",
       accent: "from-emerald-500 to-teal-600",
       glow: "text-emerald-400",
       borderGlow: "hover:border-emerald-400/50 hover:shadow-[0_0_35px_rgba(16,185,129,0.25)]",
       icon: Award,
-      headline: "Multi-dimensional candidate evaluation synthesizing unbiased hiring verdicts",
+      headline: "Multi-dimensional candidate evaluation synthesizing calibrated hiring verdicts",
       description:
-        "Audits completed session code, interviewer notes, and candidate communication to generate an executive scorecard with radar skill charts and clear hiring recommendations.",
+        "Synthesizes candidate code submissions, sandbox execution results, interviewer rubric scores, and session notes into a comprehensive executive hiring memo with 5-dimension scoring and panel pass/fail voting.",
       skills: [
-        "4-Dimensional scoring: Algorithms, Architecture, Communication, Complexity",
-        "Standardized verdicts: Strong Hire to Strong No-Hire",
-        "Candidate strengths, blindspots, and leveling signals",
+        "5-Dimension scoring: Algorithmic Rigor, Communication, Code Hygiene, Agility, Edge Cases",
+        "Calibrated verdicts from Strong Hire to No Hire with executive rationale",
+        "Automated candidate feedback letter for constructive post-interview growth",
+        "Multi-interviewer consensus voting and comment synchronization",
       ],
       sampleOutput: {
-        label: "Executive Evaluation",
-        text: "Verdict: Strong Hire (Score: 92/100). Exceptional algorithmic rigor and clean modular decomposition with optimal O(N) space bounds.",
+        label: "Veritas Executive Evaluation",
+        text: "Verdict: Strong Hire (92/100). Optimal O(N) time complexity, clean modular decomposition, and proactive boundary validation.",
         badge: "Calibrated Decision",
       },
       link: "/dashboard",
@@ -129,28 +200,29 @@ export default function AgentsShowcase() {
     },
     {
       id: "questions",
-      name: "Question Studio",
-      role: "Algorithmic Challenge Bank",
-      badge: "Test Suite Scaffolding",
+      name: "Genesis — AI Question Studio",
+      role: "Algorithmic Challenge Synthesizer",
+      badge: "Multi-Language Scaffolding",
       accent: "from-amber-500 to-rose-600",
       glow: "text-amber-400",
       borderGlow: "hover:border-amber-400/50 hover:shadow-[0_0_35px_rgba(245,158,11,0.25)]",
-      icon: Sparkles,
-      headline: "Curated interview challenges with multi-language starter code and test suites",
+      icon: Code2,
+      headline: "On-demand algorithmic challenge generation with starter code and grading keys",
       description:
-        "Manage or synthesize high-signal coding questions customized for target engineering roles, domains, and difficulty tiers, complete with runnable test cases and interviewer grading keys.",
+        "Generate bespoke, leak-proof coding problems tailored to any engineering role, topic, and difficulty tier—complete with verified input/output examples, constraints, and starter templates for Python, JavaScript, and Java.",
       skills: [
-        "Multi-language templates in Python, JavaScript, and Java",
-        "Edge-case test assertions with inputs, outputs, and explanations",
-        "Interviewer guidance notes and expected algorithmic constraints",
+        "Synthesize custom Easy, Medium, or Hard challenges in seconds",
+        "Auto-generated starter code templates for Python, JavaScript, and Java",
+        "Verified example test cases with step-by-step explanations",
+        "Private interviewer grading guidance and expected Big-O complexity",
       ],
       sampleOutput: {
-        label: "Challenge Generator",
-        text: 'Synthesized: "Distributed Rate Limiter with Sliding Window Counter" — 3 test cases, O(1) memory bound, interviewer rubric included.',
-        badge: "Ready in 1.4s",
+        label: "Genesis Challenge Synthesizer",
+        text: 'Generated: "Distributed Rate Limiter with Sliding Window Counter" — 3 verified test cases, Python/JS/Java starter code, O(1) amortized rubric.',
+        badge: "Ready in 1.2s",
       },
       link: "/dashboard/questions",
-      ctaText: "Browse Challenges",
+      ctaText: "Browse Question Studio",
     },
   ];
 
@@ -159,25 +231,88 @@ export default function AgentsShowcase() {
   const ActiveIcon = activeFeature.icon;
 
   return (
-    <section id="features" className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 relative scroll-mt-20">
-      <div className="max-w-7xl mx-auto space-y-16">
-        {/* Section Header */}
+    <div className="space-y-28 py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
+      {/* SECTION 1: FLAGSHIP AURA 4-PERSONA VOICE STUDIO SPOTLIGHT */}
+      <section id="aura-spotlight" className="max-w-7xl mx-auto scroll-mt-24 space-y-12">
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-pill text-xs font-semibold uppercase tracking-wider text-indigo-300">
-            <Zap className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Platform Capabilities</span>
+            <Mic className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Meet Aura • Flagship Voice AI Suite</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-            Engineered for Every Stage of the Technical Interview
+            Four Distinct AI Interviewer Personas.{" "}
+            <span className="bg-gradient-to-r from-indigo-400 via-violet-300 to-emerald-300 bg-clip-text text-transparent">
+              Zero Generic Chatbots.
+            </span>
           </h2>
           <p className="text-base sm:text-lg text-slate-300/85 leading-relaxed">
-            From live collaborative coding and voice practice to system design whiteboard simulation and executive scorecards — everything your team needs in one workspace.
+            Whether you want the high-pressure rigor of a Principal FAANG Bar Raiser or the warm Socratic encouragement of a Staff Mentor, choose your interviewer persona and speak naturally.
           </p>
         </div>
 
-        {/* Agent Selector Tabs (Apple Glass Pill Bar) */}
-        {/* Feature Selector Tabs (Apple Glass Pill Bar) */}
-        <div className="flex flex-wrap items-center justify-center gap-2.5 p-2 rounded-2xl glass-surface max-w-4xl mx-auto border border-white/12">
+        {/* 4 Persona Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {auraPersonas.map((p) => {
+            const PIcon = p.icon;
+            return (
+              <div
+                key={p.id}
+                className={`glass-card rounded-3xl p-6 border ${p.borderColor} flex flex-col justify-between relative overflow-hidden group`}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className={`w-11 h-11 rounded-2xl bg-gradient-to-tr ${p.accent} p-0.5 shadow-lg`}>
+                      <div className="w-full h-full bg-slate-950/90 rounded-[14px] flex items-center justify-center">
+                        <PIcon className={`w-5 h-5 ${p.textColor}`} />
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-white/10 text-slate-200 border border-white/10">
+                      {p.badge}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-xl font-extrabold text-white">{p.name}</h3>
+                    <p className={`text-xs font-semibold ${p.textColor}`}>{p.title}</p>
+                    <p className="text-xs text-slate-300/90 mt-2 leading-relaxed">{p.style}</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-4 border-t border-white/10 space-y-3">
+                  <div className="p-3 rounded-xl bg-black/40 border border-white/5 text-[11px] text-slate-300 italic leading-relaxed">
+                    {p.sample}
+                  </div>
+                  <Link
+                    href="/mock-interview"
+                    className={`flex items-center justify-between text-xs font-semibold ${p.textColor} group-hover:translate-x-0.5 transition-transform`}
+                  >
+                    <span>Interview with {p.name}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* SECTION 2: 5 SPECIALIZED AI AGENTS & CAPABILITIES */}
+      <section id="features" className="max-w-7xl mx-auto scroll-mt-24 space-y-12">
+        <div className="text-center max-w-3xl mx-auto space-y-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-pill text-xs font-semibold uppercase tracking-wider text-cyan-300">
+            <Zap className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Multi-Agent Engineering Architecture</span>
+          </div>
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+            Five Specialized Engines Powering Every Round
+          </h2>
+          <p className="text-base sm:text-lg text-slate-300/85 leading-relaxed">
+            Built on a resilient multi-model AI router with deterministic calibration fallbacks—ensuring sub-second responsiveness and 100% uptime.
+          </p>
+        </div>
+
+        {/* Selector Pill Bar */}
+        <div className="flex flex-wrap items-center justify-center gap-2 p-2 rounded-2xl glass-surface max-w-5xl mx-auto border border-white/12">
           {features.map((feature) => {
             const Icon = feature.icon;
             const isActive = feature.id === activeFeatureId;
@@ -187,35 +322,31 @@ export default function AgentsShowcase() {
                 onClick={() => setActiveFeatureId(feature.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 cursor-pointer ${
                   isActive
-                    ? "bg-white/15 text-white border border-white/25 shadow-lg shadow-black/40 scale-102"
+                    ? "bg-indigo-600 text-white border border-indigo-400/50 shadow-lg shadow-indigo-500/30"
                     : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? feature.glow : "text-slate-400"}`} />
-                <span>{feature.name}</span>
+                <Icon className={`w-4 h-4 ${isActive ? "text-white" : feature.glow}`} />
+                <span>{feature.name.split(" — ")[0]}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Active Feature Spotlight Card (Apple VisionOS Glass Card) */}
-        <div className="glass-card rounded-3xl p-6 sm:p-10 lg:p-12 border border-white/15 shadow-2xl relative overflow-hidden transition-all duration-500">
-          {/* Subtle Top Specular Sheen */}
+        {/* Active Agent Spotlight Card */}
+        <div className="glass-card rounded-3xl p-6 sm:p-10 lg:p-12 border border-white/15 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            {/* Left 7 Columns: Identity & Details */}
             <div className="lg:col-span-7 space-y-6 text-left">
               <div className="flex flex-wrap items-center gap-3">
-                <div
-                  className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${activeFeature.accent} p-0.5 shadow-lg shadow-black/40`}
-                >
-                  <div className="w-full h-full bg-slate-950/80 backdrop-blur-md rounded-[14px] flex items-center justify-center">
+                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${activeFeature.accent} p-0.5 shadow-lg`}>
+                  <div className="w-full h-full bg-slate-950/85 backdrop-blur-md rounded-[14px] flex items-center justify-center">
                     <ActiveIcon className={`w-6 h-6 ${activeFeature.glow}`} />
                   </div>
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                       {activeFeature.name}
                     </h3>
@@ -231,29 +362,27 @@ export default function AgentsShowcase() {
                 {activeFeature.headline}
               </h4>
 
-              <p className="text-sm sm:text-base text-slate-300/90 leading-relaxed font-normal">
+              <p className="text-sm sm:text-base text-slate-300/90 leading-relaxed">
                 {activeFeature.description}
               </p>
 
-              {/* Core Feature Capabilities */}
-              <div className="space-y-2.5 pt-2">
+              <div className="space-y-2.5 pt-1">
                 <span className="text-xs font-mono uppercase tracking-wider text-slate-400 block font-semibold">
-                  Key Capabilities:
+                  Production Capabilities:
                 </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-200">
                   {activeFeature.skills.map((skill, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-2 glass-surface px-3 py-2 rounded-xl border border-white/10"
+                      className="flex items-start gap-2 glass-surface p-3 rounded-xl border border-white/10"
                     >
-                      <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 ${activeFeature.glow}`} />
-                      <span className="truncate">{skill}</span>
+                      <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${activeFeature.glow}`} />
+                      <span className="leading-relaxed">{skill}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Action Button */}
               <div className="pt-2">
                 <Link href={activeFeature.link}>
                   <button className="glass-btn-primary px-6 py-3 rounded-xl text-xs sm:text-sm font-semibold text-white flex items-center gap-2 cursor-pointer shadow-lg">
@@ -264,74 +393,98 @@ export default function AgentsShowcase() {
               </div>
             </div>
 
-            {/* Right 5 Columns: Live Telemetry / Sample Output */}
-            <div className="lg:col-span-5 flex flex-col justify-between p-6 rounded-2xl glass-surface border border-white/15 bg-slate-950/60 shadow-xl space-y-4">
+            {/* Right 5 Cols: Live Telemetry Output */}
+            <div className="lg:col-span-5 flex flex-col justify-between p-6 rounded-2xl glass-surface border border-white/15 bg-slate-950/70 shadow-xl space-y-5">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  <span className="text-xs font-mono font-semibold text-slate-300">
+                  <span className="text-xs font-mono font-semibold text-slate-200">
                     {activeFeature.sampleOutput.label}
                   </span>
                 </div>
                 {activeFeature.sampleOutput.badge && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-white/10 text-slate-300 border border-white/10">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                     {activeFeature.sampleOutput.badge}
                   </span>
                 )}
               </div>
 
-              {/* Output Box */}
-              <div className="p-4 rounded-xl bg-black/40 border border-white/10 font-mono text-xs text-slate-200 leading-relaxed shadow-inner">
-                <p className="text-slate-100">{activeFeature.sampleOutput.text}</p>
+              <div className="p-4 rounded-xl bg-black/50 border border-white/10 font-mono text-xs text-slate-100 leading-relaxed shadow-inner">
+                {activeFeature.sampleOutput.text}
               </div>
 
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-2 border-t border-white/5">
-                <span>Real-Time Engine</span>
-                <span className="text-emerald-400">Sub-150ms Response</span>
+                <span>Multi-Model Failover Router</span>
+                <span className="text-emerald-400">Zero-Downtime SLA</span>
               </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Feature Overview Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 pt-4">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            const isCurrent = feature.id === activeFeatureId;
-            return (
-              <div
-                key={feature.id}
-                onClick={() => setActiveFeatureId(feature.id)}
-                className={`glass-card p-5 rounded-2xl cursor-pointer transition-all duration-300 flex flex-col justify-between ${
-                  isCurrent
-                    ? "border-white/30 bg-white/[0.08] shadow-xl"
-                    : "hover:border-white/20 border-white/10"
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div
-                      className={`w-9 h-9 rounded-xl bg-gradient-to-tr ${feature.accent} p-0.5 shadow-md`}
-                    >
-                      <div className="w-full h-full bg-slate-950/90 rounded-[10px] flex items-center justify-center">
-                        <Icon className={`w-4 h-4 ${feature.glow}`} />
-                      </div>
-                    </div>
-                  </div>
-                  <h4 className="text-sm font-bold text-white mb-1">{feature.name}</h4>
-                  <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
-                    {feature.headline}
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-indigo-400 font-medium">
-                  <span>Explore Feature</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </div>
-              </div>
-            );
-          })}
+      {/* SECTION 3: END-TO-END INTERVIEW LIFECYCLE */}
+      <section id="workflow" className="max-w-7xl mx-auto scroll-mt-24 space-y-12">
+        <div className="text-center max-w-3xl mx-auto space-y-3">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-pill text-xs font-semibold uppercase tracking-wider text-emerald-300">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Unified Assessment Workflow</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            From Challenge Synthesis to Hiring Consensus in 4 Steps
+          </h2>
         </div>
-      </div>
-    </section>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+          {[
+            {
+              step: "01",
+              title: "Synthesize or Schedule",
+              desc: "Generate role-calibrated coding problems with Genesis AI or book candidate time slots with instant notifications.",
+              badge: "Pre-Interview",
+            },
+            {
+              step: "02",
+              title: "Collaborate in Code & Video",
+              desc: "Join the low-latency WebRTC room with synchronized Monaco code editing and remote Piston sandbox execution.",
+              badge: "Live Coding",
+            },
+            {
+              step: "03",
+              title: "Stress-Test Architecture",
+              desc: "Switch to the System Design Canvas to model distributed topologies and inject 500k QPS chaos faults live.",
+              badge: "System Design",
+            },
+            {
+              step: "04",
+              title: "Calibrated Scorecard Verdict",
+              desc: "Veritas compiles code quality, rubric ratings, and panel votes into an objective 5-dimension hiring memo.",
+              badge: "Decision",
+            },
+          ].map((item, idx) => (
+            <div
+              key={idx}
+              className="glass-card p-6 rounded-2xl border border-white/10 flex flex-col justify-between space-y-4"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-extrabold font-mono bg-gradient-to-r from-indigo-400 to-cyan-300 bg-clip-text text-transparent">
+                    {item.step}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-white/5 border border-white/10 text-slate-300">
+                    {item.badge}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-white">{item.title}</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>
+              </div>
+              <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-indigo-400">
+                <span>Real-Time Convex Sync</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }

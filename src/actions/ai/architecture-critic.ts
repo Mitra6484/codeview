@@ -1,6 +1,6 @@
 "use server";
 
-import { callAi } from "@/lib/ai-provider";
+import { callAi, extractCleanJson } from "@/lib/ai-provider";
 
 export interface SystemNode {
   id: string;
@@ -108,12 +108,7 @@ ${input.candidateNotes || "None provided."}
       jsonMode: true,
     });
 
-    let jsonStr = aiRes.text.trim();
-    const jsonMatch = jsonStr.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-    if (jsonMatch && jsonMatch[1]) {
-      jsonStr = jsonMatch[1];
-    }
-
+    const jsonStr = extractCleanJson(aiRes.text);
     const parsed = JSON.parse(jsonStr) as ArchitectureCriticResponse;
     return {
       ...parsed,

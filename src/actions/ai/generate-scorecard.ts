@@ -1,6 +1,6 @@
 "use server";
 
-import { callAi } from "@/lib/ai-provider";
+import { callAi, extractCleanJson } from "@/lib/ai-provider";
 
 export interface ScorecardInput {
   interviewTitle: string;
@@ -100,12 +100,7 @@ Generate a high-signal Executive Hiring Scorecard in JSON format now.`;
       jsonMode: true,
     });
 
-    let jsonStr = aiRes.text.trim();
-    const jsonMatch = jsonStr.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-    if (jsonMatch && jsonMatch[1]) {
-      jsonStr = jsonMatch[1];
-    }
-
+    const jsonStr = extractCleanJson(aiRes.text);
     const parsed = JSON.parse(jsonStr) as ExecutiveScorecardResponse;
     return {
       ...parsed,

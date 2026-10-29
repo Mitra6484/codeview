@@ -74,7 +74,10 @@ function InterviewScheduleUI() {
   };
 
   const handleSubmit = async () => {
-    if (!client || !user) return;
+    if (!client || !user) {
+      toast.error("Video conferencing client is initializing. Please wait a moment and retry.");
+      return;
+    }
     if (!formData.candidateId || formData.interviewerIds.length === 0) {
       toast.error("Please select both candidate and at least one interviewer");
       return;

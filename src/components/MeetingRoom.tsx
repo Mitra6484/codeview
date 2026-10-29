@@ -221,10 +221,26 @@ function MeetingRoom() {
     }
   };
 
-  if (callingState !== CallingState.JOINED) {
+  const [forceEnter, setForceEnter] = useState(false);
+
+  if (callingState !== CallingState.JOINED && !forceEnter) {
     return (
-      <div className="h-96 flex items-center justify-center">
-        <LoaderIcon className="size-6 animate-spin text-indigo-400" />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-400/30 flex items-center justify-center text-indigo-400">
+          <LoaderIcon className="size-6 animate-spin text-indigo-400" />
+        </div>
+        <div>
+          <h3 className="text-base font-semibold text-white">Connecting to WebRTC Media Mesh</h3>
+          <p className="text-xs text-slate-400 mt-1 max-w-sm">
+            Negotiating peer-to-peer video streams and collaborative data channels...
+          </p>
+        </div>
+        <button
+          onClick={() => setForceEnter(true)}
+          className="glass-btn-secondary px-3.5 py-1.5 rounded-xl text-xs text-slate-300 hover:text-white cursor-pointer"
+        >
+          Enter Workspace Directly
+        </button>
       </div>
     );
   }

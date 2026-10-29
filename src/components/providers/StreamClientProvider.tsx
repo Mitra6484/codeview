@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useRef } from "react";
 import { StreamVideoClient, StreamVideo } from "@stream-io/video-react-sdk";
 import { useUser } from "@clerk/nextjs";
 import { streamTokenProvider } from "@/actions/stream.actions";
@@ -9,24 +9,34 @@ const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
   const [streamVideoClient, setStreamVideoClient] = useState<StreamVideoClient | null>(null);
   const [isWsError, setIsWsError] = useState<boolean>(false);
   const { user, isLoaded } = useUser();
+  const clientRef = useRef<StreamVideoClient | null>(null);
 
   useEffect(() => {
     if (!isLoaded || !user) return;
 
     const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY;
-    if (!apiKey) return;
+    if (!apiKey) {
+      console.warn("NEXT_PUBLIC_STREAM_API_KEY is not configured.");
+      return;
+    }
 
     let isMounted = true;
 
-    // Initialize client without immediate auto-connect in constructor
-    const client = new StreamVideoClient({ apiKey });
+    const displayName =
+      user.fullName ||
+      (user.firstName
+        ? `${user.firstName} ${user.lastName || ""}`.trim()
+        : user.username || user.id);
 
-    // Explicitly connect user and catch WebSocket failure gracefully
+    const client = new StreamVideoClient({ apiKey });
+    clientRef.current = client;
+
+    // Connect user with token provider
     client
       .connectUser(
         {
           id: user.id,
-          name: user.firstName || "" + " " + user.lastName || "" || user.id,
+          name: displayName,
           image: user.imageUrl,
         },
         streamTokenProvider
@@ -34,11 +44,12 @@ const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
       .then(() => {
         if (isMounted) {
           setStreamVideoClient(client);
+          setIsWsError(false);
         }
       })
       .catch((err) => {
         console.warn(
-          "GetStream WebSocket connection failed (App may be suspended or credentials inactive):",
+          "GetStream connection notice:",
           err?.message || err
         );
         if (isMounted) {
@@ -48,13 +59,17 @@ const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       isMounted = false;
-      client.disconnectUser().catch(() => {});
+      // Delay disconnect slightly to avoid StrictMode double-mount tearing down WebSocket
+      setTimeout(() => {
+        if (!isMounted && clientRef.current) {
+          clientRef.current.disconnectUser().catch(() => {});
+        }
+      }, 500);
     };
   }, [user, isLoaded]);
 
-  // If user is unauthenticated, client is connecting, or Stream WS failed:
-  // Render children normally so the platform continues operating smoothly.
-  if (!user || !streamVideoClient || isWsError) {
+  // If user is unauthenticated or Stream failed to connect:
+  if (!user || !streamVideoClient) {
     return <>{children}</>;
   }
 

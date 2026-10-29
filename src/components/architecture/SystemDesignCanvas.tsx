@@ -28,6 +28,14 @@ import {
   Zap,
   BarChart3,
   RefreshCw,
+  Pause,
+  Sliders,
+  Flame,
+  LayoutTemplate,
+  ZoomIn,
+  ZoomOut,
+  SlidersHorizontal,
+  ChevronDown,
 } from "lucide-react";
 import {
   evaluateSystemArchitecture,
@@ -83,6 +91,127 @@ export const PROTOCOL_OPTIONS = [
   "S3 API",
 ];
 
+export const CHAOS_FAULTS = [
+  {
+    id: "redis-crash",
+    label: "Kill Cache (Redis Outage)",
+    icon: "🔥",
+    desc: "Cache hit drops to 0%, diverting 100% of read traffic directly to the database.",
+  },
+  {
+    id: "db-exhaustion",
+    label: "Saturate DB Pool",
+    icon: "🛑",
+    desc: "Database connection pool exhaustion locks queries, spiking timeouts & latency.",
+  },
+  {
+    id: "cdn-bypass",
+    label: "Edge CDN Outage",
+    icon: "⚡",
+    desc: "Bypasses edge POPs, dumping all SSL termination and asset requests on origin.",
+  },
+  {
+    id: "network-lag",
+    label: "Cross-Zone Latency (+250ms)",
+    icon: "⏱️",
+    desc: "Simulates network partition / jitter across service mesh dependencies.",
+  },
+];
+
+export const ARCHITECTURE_PRESETS = {
+  baseline: {
+    name: "Standard 3-Tier Web App",
+    desc: "Client -> Edge CDN -> Load Balancer -> Core API -> Redis & Postgres",
+    nodes: [
+      { id: "client_1", type: "client", label: "Client Apps", technology: "iOS / Web", x: 60, y: 160 },
+      { id: "cdn_1", type: "cdn", label: "Cloudflare CDN", technology: "Edge Cache", x: 240, y: 160 },
+      { id: "lb_1", type: "lb", label: "Load Balancer", technology: "Nginx ALB", x: 420, y: 160 },
+      { id: "service_1", type: "service", label: "Core API Service", technology: "Go Cluster", x: 600, y: 160 },
+      { id: "cache_1", type: "cache", label: "Redis Cache", technology: "Cluster (LRU)", x: 780, y: 80 },
+      { id: "db_1", type: "db", label: "PostgreSQL Primary", technology: "ACID Storage", x: 780, y: 240 },
+    ],
+    edges: [
+      { from: "client_1", to: "cdn_1", protocol: "HTTPS" },
+      { from: "cdn_1", to: "lb_1", protocol: "gRPC" },
+      { from: "lb_1", to: "service_1", protocol: "HTTP/2" },
+      { from: "service_1", to: "cache_1", protocol: "TCP" },
+      { from: "service_1", to: "db_1", protocol: "SQL" },
+    ],
+  },
+  ecommerce: {
+    name: "High-Throughput E-Commerce",
+    desc: "Microservices with Order, Catalog & Payment APIs, Redis and DB replicas",
+    nodes: [
+      { id: "client_1", type: "client", label: "Web / Mobile Apps", technology: "Next.js / iOS", x: 60, y: 200 },
+      { id: "cdn_1", type: "cdn", label: "Fastly CDN", technology: "Edge Cache", x: 220, y: 200 },
+      { id: "gateway_1", type: "gateway", label: "API Gateway", technology: "Envoy Proxy", x: 380, y: 200 },
+      { id: "order_svc", type: "service", label: "Order Service", technology: "Go Microservice", x: 560, y: 90 },
+      { id: "catalog_svc", type: "service", label: "Catalog Service", technology: "Node.js Cluster", x: 560, y: 200 },
+      { id: "payment_svc", type: "service", label: "Payment Service", technology: "Rust Worker", x: 560, y: 310 },
+      { id: "cache_1", type: "cache", label: "Redis Cluster", technology: "Read Cache", x: 740, y: 140 },
+      { id: "db_primary", type: "db", label: "Postgres Primary", technology: "Write Master", x: 740, y: 260 },
+      { id: "queue_1", type: "queue", label: "Kafka Event Bus", technology: "Event Streams", x: 920, y: 200 },
+    ],
+    edges: [
+      { from: "client_1", to: "cdn_1", protocol: "HTTPS" },
+      { from: "cdn_1", to: "gateway_1", protocol: "HTTP/2" },
+      { from: "gateway_1", to: "order_svc", protocol: "gRPC" },
+      { from: "gateway_1", to: "catalog_svc", protocol: "gRPC" },
+      { from: "gateway_1", to: "payment_svc", protocol: "gRPC" },
+      { from: "catalog_svc", to: "cache_1", protocol: "Redis" },
+      { from: "order_svc", to: "db_primary", protocol: "SQL" },
+      { from: "order_svc", to: "queue_1", protocol: "Kafka" },
+      { from: "payment_svc", to: "queue_1", protocol: "Kafka" },
+    ],
+  },
+  streaming: {
+    name: "Global Video & Media Streaming",
+    desc: "Edge-cached streaming with S3 blob storage, transcoder workers, and metadata cache",
+    nodes: [
+      { id: "client_1", type: "client", label: "Smart TVs & Web", technology: "HLS / DASH Players", x: 60, y: 180 },
+      { id: "cdn_1", type: "cdn", label: "CloudFront CDN", technology: "Multi-Region Edge", x: 240, y: 180 },
+      { id: "lb_1", type: "lb", label: "Global Traffic Mgr", technology: "Route53 + ALB", x: 420, y: 180 },
+      { id: "api_svc", type: "service", label: "Streaming API", technology: "Go HTTP/3", x: 600, y: 110 },
+      { id: "transcoder", type: "service", label: "FFmpeg Transcoder", technology: "GPU Workers", x: 600, y: 260 },
+      { id: "storage_1", type: "storage", label: "S3 Video Buckets", technology: "Object Storage", x: 780, y: 260 },
+      { id: "cache_1", type: "cache", label: "Redis Metadata", technology: "Session Cache", x: 780, y: 110 },
+      { id: "db_1", type: "nosql", label: "DynamoDB Store", technology: "Profiles & Watch History", x: 950, y: 110 },
+    ],
+    edges: [
+      { from: "client_1", to: "cdn_1", protocol: "HTTPS" },
+      { from: "cdn_1", to: "storage_1", protocol: "S3 API" },
+      { from: "cdn_1", to: "lb_1", protocol: "HTTP/2" },
+      { from: "lb_1", to: "api_svc", protocol: "gRPC" },
+      { from: "lb_1", to: "transcoder", protocol: "gRPC" },
+      { from: "transcoder", to: "storage_1", protocol: "S3 API" },
+      { from: "api_svc", to: "cache_1", protocol: "Redis" },
+      { from: "api_svc", to: "db_1", protocol: "HTTPS" },
+    ],
+  },
+  realtime_chat: {
+    name: "Real-Time Chat & WebSocket Mesh",
+    desc: "Stateful WebSocket gateways, Redis Pub/Sub broker, Kafka fan-out, and Cassandra store",
+    nodes: [
+      { id: "client_1", type: "client", label: "Chat Clients", technology: "iOS / Android / Web", x: 60, y: 180 },
+      { id: "lb_1", type: "lb", label: "L4 Load Balancer", technology: "Envoy Sticky Sessions", x: 240, y: 180 },
+      { id: "ws_gw1", type: "gateway", label: "WebSocket Gateway", technology: "Erlang / Go Nodes", x: 420, y: 110 },
+      { id: "ws_gw2", type: "gateway", label: "Presence Service", technology: "Heartbeat Tracker", x: 420, y: 260 },
+      { id: "cache_1", type: "cache", label: "Redis Pub/Sub", technology: "Routing & Presence", x: 620, y: 110 },
+      { id: "queue_1", type: "queue", label: "Kafka Fan-Out", technology: "Message Bus", x: 620, y: 260 },
+      { id: "db_1", type: "nosql", label: "Cassandra Cluster", technology: "Time-Series Messages", x: 830, y: 260 },
+    ],
+    edges: [
+      { from: "client_1", to: "lb_1", protocol: "WebSocket" },
+      { from: "lb_1", to: "ws_gw1", protocol: "WebSocket" },
+      { from: "lb_1", to: "ws_gw2", protocol: "WebSocket" },
+      { from: "ws_gw1", to: "cache_1", protocol: "Redis" },
+      { from: "ws_gw2", to: "cache_1", protocol: "Redis" },
+      { from: "ws_gw1", to: "queue_1", protocol: "Kafka" },
+      { from: "queue_1", to: "db_1", protocol: "TCP" },
+    ],
+  },
+};
+
 export const inferProtocol = (fromNode?: CanvasNode, toNode?: CanvasNode): string => {
   if (!fromNode || !toNode) return "HTTPS";
   const types = [fromNode.type, toNode.type];
@@ -98,12 +227,18 @@ export const inferProtocol = (fromNode?: CanvasNode, toNode?: CanvasNode): strin
   return "HTTPS";
 };
 
-function calculateSimulation(nodes: CanvasNode[], edges: CanvasEdge[]): SimulationReport {
-  const targetQps = 100000;
-  const hasCdn = nodes.some((n) => n.type === "cdn");
+function calculateSimulation(
+  nodes: CanvasNode[],
+  edges: CanvasEdge[],
+  targetQps: number = 100000,
+  activeFaults: string[] = []
+): SimulationReport {
+  const hasCdn = nodes.some((n) => n.type === "cdn") && !activeFaults.includes("cdn-bypass");
   const hasLb = nodes.some((n) => n.type === "lb" || n.type === "gateway");
-  const hasCache = nodes.some((n) => n.type === "cache");
+  const hasCache = nodes.some((n) => n.type === "cache") && !activeFaults.includes("redis-crash");
   const hasDb = nodes.some((n) => n.type === "db" || n.type === "nosql");
+  const isDbSaturated = activeFaults.includes("db-exhaustion");
+  const hasNetworkLag = activeFaults.includes("network-lag");
   const services = nodes.filter((n) => n.type === "service");
 
   const bottlenecks: SimulationReport["bottlenecks"] = [];
@@ -115,12 +250,51 @@ function calculateSimulation(nodes: CanvasNode[], edges: CanvasEdge[]): Simulati
   let p99LatencyMs = 88;
   let cacheHitRatio: number | undefined = undefined;
 
-  if (hasDb && !hasCache) {
-    achievedQps = Math.min(achievedQps, 24500);
-    successRate = 73.8;
-    p50LatencyMs = 185;
-    p95LatencyMs = 610;
-    p99LatencyMs = 1450;
+  // Scale baseline latency with QPS load
+  const loadFactor = targetQps / 100000;
+  p50LatencyMs = Math.round(p50LatencyMs * Math.max(0.7, Math.sqrt(loadFactor)));
+  p95LatencyMs = Math.round(p95LatencyMs * Math.max(0.7, Math.sqrt(loadFactor)));
+  p99LatencyMs = Math.round(p99LatencyMs * Math.max(0.7, Math.sqrt(loadFactor)));
+
+  if (hasNetworkLag) {
+    p50LatencyMs += 145;
+    p95LatencyMs += 275;
+    p99LatencyMs += 440;
+    bottlenecks.push({
+      nodeId: "network_lag",
+      nodeLabel: "Inter-Service Mesh",
+      severity: "warning",
+      issue: "Active Network Jitter (+250ms): Cross-zone round-trip time severely degrading SLA.",
+      fix: "Enable local availability zone affinity and HTTP/2 persistent connection pooling.",
+    });
+  }
+
+  if (activeFaults.includes("redis-crash")) {
+    cacheHitRatio = 0;
+    achievedQps = Math.min(achievedQps, Math.round(22000 * Math.max(0.5, 1 / loadFactor)));
+    successRate = 58.4;
+    p50LatencyMs += 210;
+    p95LatencyMs += 780;
+    p99LatencyMs += 2100;
+    bottlenecks.push({
+      nodeId: "cache_fault",
+      nodeLabel: "In-Memory Cache Outage",
+      severity: "critical",
+      issue: "Active Fault Injected: Redis cluster offline. Zero cache hits forcing 100% direct queries into database.",
+      fix: "Deploy Redis Sentinel / Multi-AZ cluster with auto-failover and read replicas.",
+    });
+  } else if (hasCache) {
+    cacheHitRatio = Math.max(72, Math.min(96, Math.round(88 - (loadFactor - 1) * 4)));
+    achievedQps = Math.round(targetQps * 0.99);
+    successRate = 99.95;
+  }
+
+  if (isDbSaturated || (hasDb && !hasCache)) {
+    achievedQps = Math.min(achievedQps, 18500);
+    successRate = isDbSaturated ? 44.2 : 72.1;
+    p50LatencyMs += 240;
+    p95LatencyMs += 850;
+    p99LatencyMs += 2400;
 
     const dbNode = nodes.find((n) => n.type === "db" || n.type === "nosql");
     if (dbNode) {
@@ -128,20 +302,26 @@ function calculateSimulation(nodes: CanvasNode[], edges: CanvasEdge[]): Simulati
         nodeId: dbNode.id,
         nodeLabel: dbNode.label,
         severity: "critical",
-        issue: "Database Connection Pool Starvation: 100,000 QPS direct reads caused 100% CPU lockup & query timeouts.",
-        fix: "Introduce an In-Memory Cache (Redis) in front of the database to absorb 85%+ of read queries.",
+        issue: isDbSaturated
+          ? "Database Pool Starvation: Injected fault exhausted all connection slots. Query timeouts spiking."
+          : `Database Overload: Direct reads at ${targetQps.toLocaleString()} QPS without cache causing 100% CPU lockup.`,
+        fix: "Introduce an In-Memory Cache (Redis) and implement PgBouncer connection pooling with read replicas.",
       });
     }
-  } else if (hasCache) {
-    cacheHitRatio = 87.4;
-    achievedQps = 98700;
-    successRate = 99.95;
-    p50LatencyMs = 11;
-    p95LatencyMs = 31;
-    p99LatencyMs = 82;
   }
 
-  if (!hasCdn) {
+  if (activeFaults.includes("cdn-bypass")) {
+    p50LatencyMs += 45;
+    p95LatencyMs += 95;
+    p99LatencyMs += 180;
+    bottlenecks.push({
+      nodeId: "cdn_fault",
+      nodeLabel: "Edge CDN Bypass",
+      severity: "warning",
+      issue: "Edge CDN Bypassed: All static & dynamic SSL handshakes hitting origin load balancers.",
+      fix: "Re-enable Cloudflare/CloudFront edge SSL termination.",
+    });
+  } else if (!hasCdn) {
     p50LatencyMs += 15;
     p95LatencyMs += 40;
     p99LatencyMs += 85;
@@ -351,6 +531,14 @@ export default function SystemDesignCanvas({ call }: SystemDesignCanvasProps = {
 
   // Simulation & AI Critic State
   const [isSimulating, setIsSimulating] = useState(false);
+  const [isLiveSimulating, setIsLiveSimulating] = useState(true);
+  const [targetQps, setTargetQps] = useState(100000);
+  const [activeFaults, setActiveFaults] = useState<string[]>([]);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [showQpsMenu, setShowQpsMenu] = useState(false);
+  const [showChaosMenu, setShowChaosMenu] = useState(false);
+  const [showPresetMenu, setShowPresetMenu] = useState(false);
+
   const [isCritiquing, setIsCritiquing] = useState(false);
   const [criticResult, setCriticResult] = useState<ArchitectureCriticResponse | null>(null);
   const [simulationResult, setSimulationResult] = useState<SimulationReport | null>(null);
@@ -359,10 +547,60 @@ export default function SystemDesignCanvas({ call }: SystemDesignCanvasProps = {
 
   const canvasRef = useRef<SVGSVGElement | null>(null);
 
+  // Continuous Live Simulation Heartbeat
+  useEffect(() => {
+    if (!isLiveSimulating) return;
+
+    // Initial calculation
+    const report = calculateSimulation(nodes, edges, targetQps, activeFaults);
+    setSimulationResult(report);
+
+    const interval = setInterval(() => {
+      setSimulationResult(calculateSimulation(nodes, edges, targetQps, activeFaults));
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [isLiveSimulating, nodes, edges, targetQps, activeFaults]);
+
   // Protocol changer
   const handleChangeEdgeProtocol = (idx: number, protocol: string) => {
     setEdges((prev) => prev.map((e, i) => (i === idx ? { ...e, protocol } : e)));
     toast.success(`Protocol set to ${protocol}`);
+  };
+
+  const handleToggleLiveSim = () => {
+    setIsLiveSimulating((prev) => {
+      const next = !prev;
+      toast(next ? "Live continuous simulation active" : "Simulation paused", {
+        icon: next ? "⚡" : "⏸️",
+      });
+      return next;
+    });
+  };
+
+  const handleToggleFault = (faultId: string) => {
+    setActiveFaults((prev) => {
+      const exists = prev.includes(faultId);
+      const next = exists ? prev.filter((id) => id !== faultId) : [...prev, faultId];
+      const fault = CHAOS_FAULTS.find((f) => f.id === faultId);
+      toast(exists ? `Cleared: ${fault?.label}` : `Injected: ${fault?.label}`, {
+        icon: exists ? "✅" : "🔥",
+      });
+      return next;
+    });
+  };
+
+  const handleApplyPreset = (key: keyof typeof ARCHITECTURE_PRESETS) => {
+    const preset = ARCHITECTURE_PRESETS[key];
+    if (!preset) return;
+    setNodes(preset.nodes);
+    setEdges(preset.edges);
+    setSelectedNodeId(null);
+    setSelectedEdgeIdx(null);
+    setConnectSourceId(null);
+    setActiveFaults([]);
+    setShowPresetMenu(false);
+    toast.success(`Loaded: ${preset.name}`);
   };
 
   // Node Click handler
@@ -471,41 +709,28 @@ export default function SystemDesignCanvas({ call }: SystemDesignCanvasProps = {
 
   // Reset Canvas to Template
   const handleReset = () => {
-    setNodes([
-      { id: "client_1", type: "client", label: "Client Apps", technology: "iOS / Web", x: 60, y: 160 },
-      { id: "cdn_1", type: "cdn", label: "Cloudflare CDN", technology: "Edge Cache", x: 240, y: 160 },
-      { id: "lb_1", type: "lb", label: "Load Balancer", technology: "Nginx ALB", x: 420, y: 160 },
-      { id: "service_1", type: "service", label: "Core API Service", technology: "Go Cluster", x: 600, y: 160 },
-      { id: "cache_1", type: "cache", label: "Redis Cache", technology: "Cluster (LRU)", x: 780, y: 80 },
-      { id: "db_1", type: "db", label: "PostgreSQL Primary", technology: "ACID Storage", x: 780, y: 240 },
-    ]);
-    setEdges([
-      { from: "client_1", to: "cdn_1", protocol: "HTTPS" },
-      { from: "cdn_1", to: "lb_1", protocol: "gRPC" },
-      { from: "lb_1", to: "service_1", protocol: "HTTP/2" },
-      { from: "service_1", to: "cache_1", protocol: "TCP" },
-      { from: "service_1", to: "db_1", protocol: "SQL" },
-    ]);
+    setNodes(ARCHITECTURE_PRESETS.baseline.nodes);
+    setEdges(ARCHITECTURE_PRESETS.baseline.edges);
     setSelectedNodeId(null);
     setSelectedEdgeIdx(null);
     setConnectSourceId(null);
+    setActiveFaults([]);
     setCriticResult(null);
-    setSimulationResult(null);
     toast.success("Canvas reset to baseline architecture");
   };
 
-  // Trigger Traffic Simulation
+  // Trigger Traffic Burst Simulation
   const handleSimulateTraffic = () => {
     setIsSimulating(true);
     setDrawerTab("simulation");
     setIsDrawerOpen(true);
-    toast("Simulating 100,000 QPS load burst across architecture...", { icon: "⚡" });
-    const report = calculateSimulation(nodes, edges);
+    toast(`Simulating ${targetQps.toLocaleString()} QPS load burst across architecture...`, { icon: "⚡" });
+    const report = calculateSimulation(nodes, edges, targetQps, activeFaults);
     setSimulationResult(report);
     setTimeout(() => {
       setIsSimulating(false);
-      toast.success(`Traffic simulation complete: ${report.achievedQps.toLocaleString()} QPS processed!`);
-    }, 4000);
+      toast.success(`Traffic burst complete: ${report.achievedQps.toLocaleString()} QPS processed!`);
+    }, 3000);
   };
 
   // Trigger AI Architecture Critique
@@ -516,8 +741,8 @@ export default function SystemDesignCanvas({ call }: SystemDesignCanvasProps = {
     try {
       const res = await evaluateSystemArchitecture({
         scenarioTitle: "High-Throughput Web Platform",
-        scenarioDescription: "Design a fault-tolerant system supporting 100,000 QPS with sub-50ms latency.",
-        qpsTarget: "100,000 QPS",
+        scenarioDescription: `Design a fault-tolerant system supporting ${targetQps.toLocaleString()} QPS with sub-50ms latency.`,
+        qpsTarget: `${targetQps.toLocaleString()} QPS`,
         nodes: nodes.map(({ id, type, label, technology }) => ({ id, type, label, technology })),
         edges,
       });
@@ -537,18 +762,199 @@ export default function SystemDesignCanvas({ call }: SystemDesignCanvasProps = {
   return (
     <div className="flex-1 flex flex-col h-full relative overflow-hidden glass-canvas select-none">
       {/* TOP TOOLBAR */}
-      <div className="glass-nav px-4 py-2.5 flex items-center justify-between border-b border-white/10 z-20">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="glass-pill px-2.5 py-1 rounded-full text-xs font-semibold text-indigo-300">
-              Interactive Canvas
-            </span>
-            <span className="text-xs text-slate-400 hidden sm:inline">
-              Target: <strong className="text-white">100,000 QPS</strong>
-            </span>
+      <div className="glass-nav px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 z-20">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Live Simulation Indicator Pill */}
+          <button
+            onClick={handleToggleLiveSim}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border ${
+              isLiveSimulating
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/40 shadow-[0_0_15px_rgba(16,185,129,0.25)]"
+                : "bg-white/5 text-slate-400 border-white/10 hover:text-white"
+            }`}
+            title="Toggle Continuous Live Traffic Stream"
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isLiveSimulating ? "bg-emerald-400 animate-ping" : "bg-slate-500"
+              }`}
+            />
+            {isLiveSimulating ? <Activity className="w-3.5 h-3.5 text-emerald-400" /> : <Pause className="w-3.5 h-3.5 text-slate-400" />}
+            <span>{isLiveSimulating ? "Live Simulation: ON" : "Simulation Paused"}</span>
+          </button>
+
+          {/* QPS Load Selector */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowQpsMenu(!showQpsMenu);
+                setShowChaosMenu(false);
+                setShowPresetMenu(false);
+              }}
+              className="glass-btn-secondary px-3 py-1.5 rounded-xl text-xs font-mono font-semibold text-indigo-300 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Gauge className="w-3.5 h-3.5 text-indigo-400" />
+              <span>{targetQps.toLocaleString()} QPS</span>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+
+            {showQpsMenu && (
+              <div className="absolute top-full left-0 mt-2 w-64 p-3 rounded-2xl glass-modal border border-white/15 shadow-2xl z-50 text-xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Traffic Load Controller</span>
+                  <span className="font-mono text-indigo-300 font-bold">{targetQps.toLocaleString()} QPS</span>
+                </div>
+
+                {/* Interactive Range Slider (1k to 500k QPS) */}
+                <div className="space-y-1 px-1">
+                  <input
+                    type="range"
+                    min={1000}
+                    max={500000}
+                    step={1000}
+                    value={targetQps}
+                    onChange={(e) => setTargetQps(Number(e.target.value))}
+                    className="w-full accent-indigo-500 cursor-pointer h-1.5 bg-white/10 rounded-lg"
+                  />
+                  <div className="flex justify-between text-[9px] font-mono text-slate-500">
+                    <span>1k QPS</span>
+                    <span>250k QPS</span>
+                    <span>500k QPS</span>
+                  </div>
+                </div>
+
+                <div className="h-px bg-white/10" />
+                <span className="text-[10px] uppercase font-bold text-slate-400 px-1 block">Quick Profiles</span>
+                <div className="grid grid-cols-2 gap-1">
+                  {[
+                    { label: "10k QPS", val: 10000 },
+                    { label: "50k QPS", val: 50000 },
+                    { label: "100k QPS", val: 100000 },
+                    { label: "250k QPS", val: 250000 },
+                    { label: "350k QPS", val: 350000 },
+                    { label: "500k QPS", val: 500000 },
+                  ].map((q) => (
+                    <button
+                      key={q.val}
+                      onClick={() => {
+                        setTargetQps(q.val);
+                        setShowQpsMenu(false);
+                        toast.success(`Target load set to ${q.val.toLocaleString()} QPS`);
+                      }}
+                      className={`text-center px-2 py-1 rounded-lg font-mono text-[11px] transition-colors cursor-pointer ${
+                        targetQps === q.val ? "bg-indigo-600 text-white font-semibold" : "bg-white/5 text-slate-300 hover:bg-white/10"
+                      }`}
+                    >
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="h-4 w-px bg-white/10 mx-1" />
+          {/* Chaos Fault Injection Menu */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowChaosMenu(!showChaosMenu);
+                setShowQpsMenu(false);
+                setShowPresetMenu(false);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border ${
+                activeFaults.length > 0
+                  ? "bg-rose-500/20 text-rose-300 border-rose-400/50 shadow-[0_0_15px_rgba(244,63,94,0.3)] animate-pulse"
+                  : "glass-btn-secondary text-slate-300 hover:text-white"
+              }`}
+            >
+              <Flame className={`w-3.5 h-3.5 ${activeFaults.length > 0 ? "text-rose-400" : "text-amber-400"}`} />
+              <span>Fault Injection {activeFaults.length > 0 && `(${activeFaults.length})`}</span>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+
+            {showChaosMenu && (
+              <div className="absolute top-full left-0 mt-2 w-72 p-2.5 rounded-2xl glass-modal border border-white/15 shadow-2xl z-50 text-xs space-y-2">
+                <div className="flex items-center justify-between pb-1 border-b border-white/10">
+                  <span className="font-bold text-white text-xs flex items-center gap-1">
+                    <Flame className="w-3.5 h-3.5 text-rose-400" />
+                    Chaos Engineering
+                  </span>
+                  {activeFaults.length > 0 && (
+                    <button
+                      onClick={() => setActiveFaults([])}
+                      className="text-[10px] text-emerald-400 hover:underline cursor-pointer"
+                    >
+                      Clear All Faults
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  {CHAOS_FAULTS.map((fault) => {
+                    const isActive = activeFaults.includes(fault.id);
+                    return (
+                      <button
+                        key={fault.id}
+                        onClick={() => handleToggleFault(fault.id)}
+                        className={`w-full text-left p-2 rounded-xl border transition-all cursor-pointer flex flex-col gap-0.5 ${
+                          isActive
+                            ? "bg-rose-500/20 border-rose-500/40 text-rose-200"
+                            : "bg-white/[0.03] border-white/5 text-slate-300 hover:bg-white/10"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-xs flex items-center gap-1">
+                            <span>{fault.icon}</span>
+                            <span>{fault.label}</span>
+                          </span>
+                          <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                            isActive ? "bg-rose-500/40 text-white font-bold" : "text-slate-500"
+                          }`}>
+                            {isActive ? "ACTIVE" : "OFF"}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 leading-tight">{fault.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Architecture Presets Menu */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowPresetMenu(!showPresetMenu);
+                setShowQpsMenu(false);
+                setShowChaosMenu(false);
+              }}
+              className="glass-btn-secondary px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 cursor-pointer"
+            >
+              <LayoutTemplate className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Presets</span>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+
+            {showPresetMenu && (
+              <div className="absolute top-full left-0 mt-2 w-64 p-2.5 rounded-2xl glass-modal border border-white/15 shadow-2xl z-50 text-xs space-y-1.5">
+                <span className="text-[10px] uppercase font-bold text-slate-400 px-1 block">Architecture Patterns</span>
+                {Object.entries(ARCHITECTURE_PRESETS).map(([k, p]) => (
+                  <button
+                    key={k}
+                    onClick={() => handleApplyPreset(k as any)}
+                    className="w-full text-left p-2 rounded-xl bg-white/[0.03] hover:bg-white/10 border border-white/5 transition-colors cursor-pointer space-y-0.5"
+                  >
+                    <span className="font-semibold text-white block">{p.name}</span>
+                    <span className="text-[10px] text-slate-400 block leading-tight">{p.desc}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block" />
 
           {/* Connect Source Active Mode */}
           {connectSourceId ? (
@@ -578,7 +984,7 @@ export default function SystemDesignCanvas({ call }: SystemDesignCanvasProps = {
               title="Click source node, then click target node to connect"
             >
               <Workflow className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Connect Nodes</span>
+              <span>Connect</span>
             </button>
           )}
 
@@ -630,9 +1036,10 @@ export default function SystemDesignCanvas({ call }: SystemDesignCanvasProps = {
             </div>
           )}
 
+          {/* Reset button */}
           <button
             onClick={handleReset}
-            className="p-1.5 rounded-xl glass-btn-secondary text-slate-400 hover:text-white text-xs cursor-pointer ml-1"
+            className="p-1.5 rounded-xl glass-btn-secondary text-slate-400 hover:text-white text-xs cursor-pointer"
             title="Reset Architecture to Baseline"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -640,31 +1047,22 @@ export default function SystemDesignCanvas({ call }: SystemDesignCanvasProps = {
         </div>
 
         {/* Right Action Buttons */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {simulationResult && (
             <button
               onClick={() => {
                 setDrawerTab("simulation");
                 setIsDrawerOpen(true);
               }}
-              className="glass-btn-secondary px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-300 border-emerald-500/30 flex items-center gap-1.5 cursor-pointer"
+              className="glass-btn-secondary px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-300 border-emerald-500/30 flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
               <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline">Sim Report</span>
-              <span className="font-mono text-[10px] text-emerald-400">({simulationResult.achievedQps.toLocaleString()} QPS)</span>
+              <span className="hidden sm:inline">Telemetry</span>
+              <span className="font-mono text-[10px] text-emerald-400">
+                ({simulationResult.achievedQps.toLocaleString()} QPS)
+              </span>
             </button>
           )}
-
-          <button
-            onClick={handleSimulateTraffic}
-            disabled={isSimulating}
-            className={`glass-btn-secondary px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer ${
-              isSimulating ? "text-emerald-400 border-emerald-500/40" : "text-slate-300"
-            }`}
-          >
-            <Play className={`w-3.5 h-3.5 ${isSimulating ? "animate-spin text-emerald-400" : ""}`} />
-            <span>{isSimulating ? "Simulating 100k QPS..." : "Simulate Traffic"}</span>
-          </button>
 
           <button
             onClick={handleCritiqueArchitecture}
@@ -672,7 +1070,7 @@ export default function SystemDesignCanvas({ call }: SystemDesignCanvasProps = {
             className="glass-btn-primary px-4 py-1.5 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer shadow-lg shadow-indigo-500/25"
           >
             <Sparkles className={`w-3.5 h-3.5 ${isCritiquing ? "animate-spin" : ""}`} />
-            <span>{isCritiquing ? "AI Reviewing..." : "Critique Architecture"}</span>
+            <span>{isCritiquing ? "Atlas Auditing..." : "Atlas AI Review"}</span>
           </button>
         </div>
       </div>
@@ -807,43 +1205,64 @@ export default function SystemDesignCanvas({ call }: SystemDesignCanvasProps = {
                   />
 
                   {/* Visible rendered line with flowing surge animation during simulation */}
-                  <line
-                    x1={x1}
-                    y1={y1}
-                    x2={x2}
-                    y2={y2}
-                    stroke={isEdgeSelected ? "url(#edgeSelectedGradient)" : isSimulating ? "#38bdf8" : "url(#edgeGradient)"}
-                    strokeWidth={isEdgeSelected ? 4 : isSimulating ? 3 : 2}
-                    strokeDasharray={isSimulating ? "6 6" : "none"}
-                    className={isSimulating ? "sim-traffic-flowing" : ""}
-                  />
-                  <circle
-                    cx={x2}
-                    cy={y2}
-                    r={isEdgeSelected ? 5 : 4}
-                    fill={isEdgeSelected ? "#f59e0b" : "#10b981"}
-                  />
+                  {(() => {
+                    const isFaultEdge =
+                      (activeFaults.includes("redis-crash") && (fromNode.type === "cache" || toNode.type === "cache")) ||
+                      (activeFaults.includes("db-exhaustion") && (fromNode.type === "db" || toNode.type === "db")) ||
+                      (activeFaults.includes("cdn-bypass") && (fromNode.type === "cdn" || toNode.type === "cdn"));
+                    const isFlowing = isLiveSimulating || isSimulating;
+                    const animDur = Math.max(0.4, Math.min(2.0, (180000 / targetQps))).toFixed(2) + "s";
 
-                  {/* Animated Visual Traffic Packets Darting Along the Edge */}
-                  {isSimulating && (
-                    <>
-                      <circle r={4.5} fill="#38bdf8" filter="url(#glowParticle)">
-                        <animateMotion
-                          path={`M ${x1} ${y1} L ${x2} ${y2}`}
-                          dur="1.2s"
-                          repeatCount="indefinite"
+                    return (
+                      <>
+                        <line
+                          x1={x1}
+                          y1={y1}
+                          x2={x2}
+                          y2={y2}
+                          stroke={
+                            isEdgeSelected
+                              ? "url(#edgeSelectedGradient)"
+                              : isFaultEdge
+                              ? "#f43f5e"
+                              : isFlowing
+                              ? "#38bdf8"
+                              : "url(#edgeGradient)"
+                          }
+                          strokeWidth={isEdgeSelected ? 4 : isFlowing ? 3 : 2}
+                          strokeDasharray={isFaultEdge ? "4 4" : isFlowing ? "6 6" : "none"}
+                          className={isFlowing ? "sim-traffic-flowing" : ""}
                         />
-                      </circle>
-                      <circle r={3} fill="#c084fc" filter="url(#glowParticle)">
-                        <animateMotion
-                          path={`M ${x1} ${y1} L ${x2} ${y2}`}
-                          dur="1.2s"
-                          begin="0.6s"
-                          repeatCount="indefinite"
+                        <circle
+                          cx={x2}
+                          cy={y2}
+                          r={isEdgeSelected ? 5 : 4}
+                          fill={isEdgeSelected ? "#f59e0b" : isFaultEdge ? "#f43f5e" : "#10b981"}
                         />
-                      </circle>
-                    </>
-                  )}
+
+                        {/* Animated Visual Traffic Packets Darting Along the Edge */}
+                        {isFlowing && (
+                          <>
+                            <circle r={4.5} fill={isFaultEdge ? "#f43f5e" : "#38bdf8"} filter="url(#glowParticle)">
+                              <animateMotion
+                                path={`M ${x1} ${y1} L ${x2} ${y2}`}
+                                dur={animDur}
+                                repeatCount="indefinite"
+                              />
+                            </circle>
+                            <circle r={3} fill={isFaultEdge ? "#fb7185" : "#c084fc"} filter="url(#glowParticle)">
+                              <animateMotion
+                                path={`M ${x1} ${y1} L ${x2} ${y2}`}
+                                dur={animDur}
+                                begin="0.4s"
+                                repeatCount="indefinite"
+                              />
+                            </circle>
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   {/* Protocol Badge on Edge (Clickable to select and change) */}
                   <g
@@ -949,28 +1368,35 @@ export default function SystemDesignCanvas({ call }: SystemDesignCanvasProps = {
                 )}
 
                 {/* Real-Time Live Telemetry HUD during Simulation */}
-                {isSimulating && (
-                  <div
-                    className={`absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-tight whitespace-nowrap shadow-xl flex items-center gap-1 z-30 pointer-events-none ${
-                      isDbBottleneck
-                        ? "bg-rose-500/30 border border-rose-400 text-rose-200 animate-pulse shadow-[0_0_15px_rgba(244,63,94,0.5)]"
-                        : "bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.3)] animate-pulse"
-                    }`}
-                  >
-                    <Activity className="w-2.5 h-2.5" />
-                    <span>
-                      {node.type === "client" && "⚡ 100k req/s"}
-                      {node.type === "cdn" && "⚡ 98k QPS (Edge 88%)"}
-                      {(node.type === "lb" || node.type === "gateway") && "⚡ 65k QPS balanced"}
-                      {node.type === "service" && "⚡ 65k QPS (11ms)"}
-                      {node.type === "cache" && "⚡ 65k QPS (Hit: 87%)"}
-                      {node.type === "db" && (isDbBottleneck ? "🔥 100% CPU OVERLOAD" : "⚡ 12.5k QPS (Healthy)")}
-                      {node.type === "queue" && "⚡ 35k msg/s"}
-                      {node.type === "storage" && "⚡ 15k ops/s"}
-                      {node.type === "nosql" && "⚡ 45k ops/s"}
-                    </span>
-                  </div>
-                )}
+                {(isLiveSimulating || isSimulating) && (() => {
+                  const metric = simulationResult?.nodeMetrics.find((m) => m.nodeId === node.id);
+                  const isFaulted =
+                    (activeFaults.includes("redis-crash") && node.type === "cache") ||
+                    (activeFaults.includes("db-exhaustion") && (node.type === "db" || node.type === "nosql")) ||
+                    (activeFaults.includes("cdn-bypass") && node.type === "cdn");
+                  const isOverload = isFaulted || metric?.status === "Bottleneck";
+
+                  return (
+                    <div
+                      className={`absolute -top-7 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-tight whitespace-nowrap shadow-xl flex items-center gap-1 z-30 pointer-events-none ${
+                        isOverload
+                          ? "bg-rose-500/30 border border-rose-400 text-rose-200 animate-pulse shadow-[0_0_15px_rgba(244,63,94,0.5)]"
+                          : metric?.status === "Strained"
+                          ? "bg-amber-500/25 border border-amber-400 text-amber-200 animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.3)]"
+                          : "bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                      }`}
+                    >
+                      <Activity className="w-2.5 h-2.5" />
+                      <span>
+                        {isFaulted
+                          ? "🔥 FAULT INJECTED"
+                          : metric
+                          ? `⚡ ${(metric.qpsHandled / 1000).toFixed(0)}k QPS (${metric.cpuLoad}% CPU)`
+                          : "Active"}
+                      </span>
+                    </div>
+                  );
+                })()}
 
                 <div className="flex items-center gap-2 mb-1.5">
                   <div className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 shrink-0">
@@ -982,6 +1408,23 @@ export default function SystemDesignCanvas({ call }: SystemDesignCanvasProps = {
                   <span className="truncate">{node.technology || "Service"}</span>
                   <span className={`w-1.5 h-1.5 rounded-full shrink-0 ml-1 ${isDbBottleneck && isSimulating ? "bg-rose-400 animate-ping" : "bg-emerald-400"}`} />
                 </div>
+
+                {(isLiveSimulating || isSimulating) && (() => {
+                  const metric = simulationResult?.nodeMetrics.find((m) => m.nodeId === node.id);
+                  if (!metric) return null;
+                  return (
+                    <div className="mt-2 pt-1.5 border-t border-white/10 grid grid-cols-2 gap-1 text-[9px] font-mono text-slate-400">
+                      <div className="flex items-center justify-between bg-white/[0.03] px-1.5 py-0.5 rounded">
+                        <span>CPU</span>
+                        <span className={metric.cpuLoad > 80 ? "text-rose-400 font-bold" : "text-slate-200"}>{metric.cpuLoad}%</span>
+                      </div>
+                      <div className="flex items-center justify-between bg-white/[0.03] px-1.5 py-0.5 rounded">
+                        <span>RAM</span>
+                        <span className={metric.memoryLoad > 85 ? "text-amber-400 font-bold" : "text-slate-200"}>{metric.memoryLoad}%</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}

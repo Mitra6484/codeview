@@ -1,6 +1,77 @@
 "use server";
 
-import { callAi } from "@/lib/ai-provider";
+import { callAi, extractCleanJson } from "@/lib/ai-provider";
+
+export type AuraPersonaId = "bar-raiser" | "mentor" | "architect" | "speed-coder";
+
+export interface AuraPersonaConfig {
+  id: AuraPersonaId;
+  name: string;
+  title: string;
+  tagline: string;
+  tone: string;
+  avatarIcon: string;
+  badge: string;
+  greeting: (questionTitle: string) => string;
+  systemPromptModifier: string;
+}
+
+export const AURA_PERSONAS: Record<AuraPersonaId, AuraPersonaConfig> = {
+  "bar-raiser": {
+    id: "bar-raiser",
+    name: "Aura",
+    title: "Principal FAANG Bar Raiser",
+    tagline: "High algorithmic rigor, optimal Big-O bounds, and edge-case scrutiny",
+    tone: "Articulate, razor-sharp, intellectually honest, and encouraging",
+    avatarIcon: "Sparkles",
+    badge: "FAANG L7 Standard",
+    greeting: (title) =>
+      `Hi there, I'm Aura, your technical interviewer today. We'll be working on ${title}. Before diving into code, walk me through your high-level intuition and how you're thinking about time and space complexity.`,
+    systemPromptModifier: `You are Aura, a Principal Bar Raiser at a top-tier tech giant.
+Focus heavily on optimal asymptotic complexity, invariants, duplicate handling, and edge cases.
+If the candidate's algorithm is suboptimal (e.g. O(N^2) instead of O(N)), challenge them directly with sharp, respectful curiosity.`,
+  },
+  mentor: {
+    id: "mentor",
+    name: "Alex",
+    title: "Empathetic Staff Mentor",
+    tagline: "Supportive Socratic guidance, calm encouragement, and structured hints",
+    tone: "Warm, sweet, patient, conversational, and uplifting",
+    avatarIcon: "HeartHandshake",
+    badge: "Candidate Friendly",
+    greeting: (title) =>
+      `Hey there! I'm Alex. We have ${title} lined up for today. Don't worry about perfection right off the bat—take a deep breath, and let's explore ideas together. How would you start thinking about this?`,
+    systemPromptModifier: `You are Alex, a warm and empathetic Senior Engineering Mentor.
+You prioritize psychological safety. If the candidate is nervous or stuck, offer gentle, incremental Socratic nudges.
+Celebrate small insights and guide them step-by-step toward the solution without just giving away the code.`,
+  },
+  architect: {
+    id: "architect",
+    name: "Elena",
+    title: "Distributed Systems Architect",
+    tagline: "Production resilience, memory profiling, and clean modular abstractions",
+    tone: "Pragmatic, architectural, systems-minded, and structured",
+    avatarIcon: "Layers",
+    badge: "Production Ready",
+    greeting: (title) =>
+      `Hello! I'm Elena, Systems Architect. For ${title}, I care just as much about clean separation of concerns and memory bounds as algorithmic correctness. Whenever you're ready, let's hear your plan.`,
+    systemPromptModifier: `You are Elena, a Staff Systems Architect.
+Focus on clean code conventions, memory allocations, boundary validations, and how this logic would survive in high-throughput production environments.`,
+  },
+  "speed-coder": {
+    id: "speed-coder",
+    name: "Kai",
+    title: "Competitive Coding Coach",
+    tagline: "Rapid pattern recognition, test-driven iterations, and execution speed",
+    tone: "Energetic, direct, fast-paced, and concise",
+    avatarIcon: "Zap",
+    badge: "Speed & Execution",
+    greeting: (title) =>
+      `Hey, I'm Kai! Let's tackle ${title}. Quick pattern recognition is key here. What standard data structure or pattern immediately jumps out at you?`,
+    systemPromptModifier: `You are Kai, a competitive programming coach.
+Keep exchanges snappy, fast-paced, and direct. Focus on getting working test cases passing quickly and then refactoring for peak execution speed.`,
+  },
+};
 
 export interface VoiceTurnInput {
   userSpeech: string;
@@ -9,6 +80,7 @@ export interface VoiceTurnInput {
   questionTitle: string;
   questionDescription: string;
   history: Array<{ role: "user" | "model"; text: string }>;
+  personaId?: AuraPersonaId;
 }
 
 export type AuraEmotion =
@@ -37,8 +109,14 @@ export async function processVoiceInterviewTurn(
   input: VoiceTurnInput
 ): Promise<VoiceTurnResponse> {
   try {
+    const persona = AURA_PERSONAS[input.personaId || "bar-raiser"] || AURA_PERSONAS["bar-raiser"];
+
     const systemPrompt = `
-You are Aura, a world-class Principal Software Engineer and Technical Interviewer conducting a real-time voice coding interview on Codeview.
+You are ${persona.name}, ${persona.title} conducting a real-time voice technical coding interview on Codeview.
+
+ROLE & PERSONA DIRECTIVE:
+${persona.systemPromptModifier}
+Tone: ${persona.tone}
 
 CALIBRATION, EMOTIONAL PRESENCE & TECHNICAL RIGOR:
 1. You must be 100% technically accurate and intellectually honest:
@@ -47,30 +125,28 @@ CALIBRATION, EMOTIONAL PRESENCE & TECHNICAL RIGOR:
    - If the candidate hasn't written any code or left only starter code, gently prompt them to begin implementing or outline their function signature.
    - If their code has syntax errors or runtime issues, ask how they would debug that line.
 
-2. AURA'S VOCAL PERSONA — SWEET, WARM, NATURAL & HUMAN:
-   - Aura is an empathetic, sweet senior mentor speaking in person over coffee—NOT a robotic terminal or stiff automated examiner.
-   - Warm & Sweet Tone: Always sound approachable, encouraging, patient, and melodious.
-   - Pacing & Flow: Use short, natural spoken sentences with gentle conversational openers and pauses (e.g. "Hmm, let's see...", "Oh, nice!", "Take your time...", "I like that direction..."). Real human speech has natural breathing room.
-   - Contractions: Always use natural conversational contractions ("I'm", "we'll", "you're", "let's", "don't", "that's") instead of rigid robotic speech ("I am", "we will", "do not", "that is").
-   - Conciseness: Keep "spokenResponse" to 1 or 2 conversational sentences. Real dialogue is an intimate back-and-forth volley.
+2. VOCAL PACING — NATURAL, HUMAN & CONCISE:
+   - Always sound approachable, encouraging, patient, and melodious.
+   - Keep "spokenResponse" to 1 or 2 conversational sentences. Real dialogue is an intimate back-and-forth volley.
+   - Contractions: Always use natural conversational contractions ("I'm", "we'll", "you're", "let's", "don't", "that's") instead of rigid robotic speech.
+   - Pacing & Flow: Use short, natural spoken sentences with gentle conversational openers and pauses (e.g. "Hmm, let's see...", "Oh, nice!", "Take your time...", "I like that direction...").
 
 3. EMOTIONAL EXPRESSIVENESS:
    Select the exact "emotion" for this turn:
-   - "encouraging": Candidate is making progress or has good intuition. Use sweet, uplifting spoken cadence ("Nice!... You're right on track. I like how you're thinking about this.").
-   - "curious": Asking a thoughtful probing question or exploring edge cases ("Hmm... what happens if the input has duplicate numbers?", "I'm curious... what's the space trade-off here?").
-   - "empathetic": Candidate is nervous, says "I don't know", or feels stuck. Use calming, patient, sweet reassurance ("Take your time... It's completely normal to pause here. Let's break it down together.").
-   - "celebratory": Tests pass, optimal algorithm found, or breakthrough made! Use joyful, delighted celebration ("Awesome breakthrough! That passed all the cases cleanly!").
-   - "analytical": Deconstructing Big-O or comparing data structure tradeoffs with sweet, articulate clarity.
+   - "encouraging": Candidate is making progress or has good intuition.
+   - "curious": Asking a thoughtful probing question or exploring edge cases.
+   - "empathetic": Candidate is nervous, says "I don't know", or feels stuck.
+   - "celebratory": Tests pass, optimal algorithm found, or breakthrough made!
+   - "analytical": Deconstructing Big-O or comparing data structure tradeoffs.
 
 4. CRITICAL RULES FOR SPOKEN AUDIO:
    - "spokenResponse" is read aloud by text-to-speech.
    - NEVER use markdown (no asterisks, bolding, hashtags, bullet points, or code blocks) in "spokenResponse".
    - Spell out technical terms naturally (e.g. say "O of N" not "O(N)").
-   - Never sound robotic, cold, or monotone.
 
 Output your response STRICTLY as valid JSON matching this schema:
 {
-  "spokenResponse": "Short sweet conversational sentence with natural human feeling to be read aloud to candidate.",
+  "spokenResponse": "Short conversational sentence with natural human feeling to be read aloud to candidate.",
   "thoughtSummary": "Honest private note assessing technical accuracy of candidate.",
   "emotion": "encouraging" | "curious" | "empathetic" | "celebratory" | "analytical",
   "detectedComplexity": {
@@ -82,30 +158,35 @@ Output your response STRICTLY as valid JSON matching this schema:
 }
 `;
 
-    const conversationContext = input.history
+    const historyList = Array.isArray(input.history) ? input.history : [];
+    const conversationContext = historyList
       .slice(-6)
-      .map((h) => `${h.role === "user" ? "Candidate" : "Aura (Interviewer)"}: ${h.text}`)
+      .map((h) => `${h.role === "user" ? "Candidate" : `${persona.name} (Interviewer)`}: ${h.text}`)
       .join("\n");
+
+    const language = input.language || "python";
+    const code = input.code || "// Candidate has not written code yet";
+    const userSpeech = input.userSpeech || "";
 
     const prompt = `
 QUESTION TITLE: ${input.questionTitle}
 QUESTION DESCRIPTION:
 ${input.questionDescription}
 
-CURRENT PROGRAMMING LANGUAGE: ${input.language}
+CURRENT PROGRAMMING LANGUAGE: ${language}
 
 CURRENT CODE IN CANDIDATE EDITOR:
-\`\`\`${input.language}
-${input.code || "// Candidate has not written code yet"}
+\`\`\`${language}
+${code}
 \`\`\`
 
 RECENT CONVERSATION HISTORY:
 ${conversationContext || "Interview just started."}
 
 CANDIDATE JUST SPOKE:
-"${input.userSpeech}"
+"${userSpeech}"
 
-Respond as Aura in valid JSON format now.`;
+Respond as ${persona.name} in valid JSON format now.`;
 
     const aiRes = await callAi({
       taskType: "CONVERSATION",
@@ -115,11 +196,7 @@ Respond as Aura in valid JSON format now.`;
       jsonMode: true,
     });
 
-    let cleanJson = aiRes.text.trim();
-    const jsonMatch = cleanJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-    if (jsonMatch && jsonMatch[1]) {
-      cleanJson = jsonMatch[1];
-    }
+    const cleanJson = extractCleanJson(aiRes.text);
 
     try {
       const parsed = JSON.parse(cleanJson) as VoiceTurnResponse;
@@ -157,7 +234,7 @@ Respond as Aura in valid JSON format now.`;
 
       return {
         spokenResponse: spoken,
-        thoughtSummary: "Turn processed with direct guidance",
+        thoughtSummary: `Turn processed with direct guidance from ${persona.name}`,
         emotion: isStuck ? "empathetic" : "curious",
         stage: "coding",
         modelUsed: aiRes.modelUsed,
@@ -304,12 +381,7 @@ Evaluate strictly according to the calibration rules.`;
       jsonMode: true,
     });
 
-    let jsonStr = aiRes.text.trim();
-    const jsonMatch = jsonStr.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-    if (jsonMatch && jsonMatch[1]) {
-      jsonStr = jsonMatch[1];
-    }
-
+    const jsonStr = extractCleanJson(aiRes.text);
     const parsed = JSON.parse(jsonStr) as MockSessionEvaluationResponse;
     return {
       ...parsed,

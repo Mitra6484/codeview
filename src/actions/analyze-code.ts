@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { callAi } from "@/lib/ai-provider";
+import { callAi, extractCleanJson } from "@/lib/ai-provider";
 
 const AnalyzeCodeSchema = z.object({
   code: z.string(),
@@ -57,11 +57,7 @@ Analyze this code thoroughly for structure, style consistency, algorithmic fit, 
       jsonMode: true,
     });
 
-    let jsonStr = aiRes.text.trim();
-    const jsonMatch = jsonStr.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-    if (jsonMatch && jsonMatch[1]) {
-      jsonStr = jsonMatch[1];
-    }
+    const jsonStr = extractCleanJson(aiRes.text);
 
     try {
       const analysis = JSON.parse(jsonStr) as CodeAnalysisResult;

@@ -216,10 +216,17 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
   const [audioLevel, setAudioLevel] = useState<number>(0);
   const [currentEmotion, setCurrentEmotion] = useState<AuraEmotion>("encouraging");
   const [activeVoiceName, setActiveVoiceName] = useState<string>("Calibrated Natural Voice");
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>("");
+  const [speechRateMultiplier, setSpeechRateMultiplier] = useState<number>(1.0);
 
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+  const selectedVoiceURIRef = useRef<string>("");
+  const speechRateMultiplierRef = useRef<number>(1.0);
+  selectedVoiceURIRef.current = selectedVoiceURI;
+  speechRateMultiplierRef.current = speechRateMultiplier;
   const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isListeningRef = useRef<boolean>(false);
   const isAuraSpeakingRef = useRef<boolean>(false);
@@ -239,9 +246,14 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
       const available = synthRef.current.getVoices();
       if (available && available.length > 0) {
         voicesRef.current = available;
+        const englishOnly = available.filter((v) => v.lang.toLowerCase().startsWith("en"));
+        setAvailableVoices(englishOnly.length > 0 ? englishOnly : available);
         const best = selectBestSweetVoice(available);
         if (best) {
           setActiveVoiceName(best.name);
+          if (!selectedVoiceURIRef.current) {
+            setSelectedVoiceURI(best.voiceURI);
+          }
         }
       }
     };
@@ -405,18 +417,22 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "en-US";
 
-      // Modulate prosody: slower tempo and sweet melodious pitch
+      // Modulate prosody: slower tempo and sweet melodious pitch, scaled by user multiplier
       const prosody = EMOTION_PROSODY[emotion] || EMOTION_PROSODY.encouraging;
-      utterance.rate = prosody.rate;
+      const mult = speechRateMultiplierRef.current || 1.0;
+      utterance.rate = Math.min(1.5, Math.max(0.6, prosody.rate * mult));
       utterance.pitch = prosody.pitch;
       utterance.volume = prosody.volume;
 
-      // Select sweet feminine voice
+      // Select user-chosen voice or sweet feminine voice
       if (voices.length > 0) {
-        const sweetVoice = selectBestSweetVoice(voices);
-        if (sweetVoice) {
-          utterance.voice = sweetVoice;
-          setActiveVoiceName(sweetVoice.name);
+        const chosenVoice = selectedVoiceURIRef.current
+          ? voices.find((v) => v.voiceURI === selectedVoiceURIRef.current)
+          : null;
+        const targetVoice = chosenVoice || selectBestSweetVoice(voices);
+        if (targetVoice) {
+          utterance.voice = targetVoice;
+          setActiveVoiceName(targetVoice.name);
         }
       }
 
@@ -542,6 +558,11 @@ export function useVoiceInterview({ onSpeechResult }: UseVoiceInterviewOptions =
     audioLevel,
     currentEmotion,
     activeVoiceName,
+    availableVoices,
+    selectedVoiceURI,
+    setSelectedVoiceURI,
+    speechRateMultiplier,
+    setSpeechRateMultiplier,
     speak,
     stopSpeaking,
     startListening,
