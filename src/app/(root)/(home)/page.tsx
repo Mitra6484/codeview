@@ -17,7 +17,7 @@ import LandingPage from "@/components/landing/LandingPage";
 function DashboardView() {
   const router = useRouter();
   const { user } = useUser();
-  const { isInterviewer, isCandidate, isMounted } = useUserRole();
+  const { isInterviewer, isCandidate, isMounted, switchRole } = useUserRole();
   const interviews = useQuery(api.interviews.getMyInterviews);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"start" | "join">();
@@ -38,6 +38,12 @@ function DashboardView() {
         setModalType("join");
         setShowModal(true);
         break;
+      case "Schedule":
+        router.push("/schedule");
+        break;
+      case "Recordings":
+        router.push("/recordings");
+        break;
       default:
         router.push(`/${title.toLowerCase()}`);
     }
@@ -54,15 +60,18 @@ function DashboardView() {
             <span>Workspace Active</span>
           </span>
           {isMounted && (
-            <span
-              className={`glass-pill px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 ${
+            <button
+              onClick={() => switchRole(isInterviewer ? "candidate" : "interviewer")}
+              className={`glass-pill px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95 ${
                 isInterviewer
-                  ? "text-indigo-300 bg-indigo-500/10 border border-indigo-500/30"
-                  : "text-emerald-300 bg-emerald-500/10 border border-emerald-500/30"
+                  ? "text-indigo-300 bg-indigo-500/15 border border-indigo-500/30 hover:bg-indigo-500/25"
+                  : "text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 hover:bg-emerald-500/25"
               }`}
+              title="Click to toggle between Candidate and Interviewer modes"
             >
               <span>Role: {isInterviewer ? "Interviewer" : "Candidate"}</span>
-            </span>
+              <span className="text-[10px] opacity-75">⇄</span>
+            </button>
           )}
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">

@@ -17,7 +17,7 @@ import {
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { isInterviewer, isCandidate, isMounted } = useUserRole();
+  const { isInterviewer, isCandidate, isMounted, switchRole } = useUserRole();
 
   const isMeetingRoom = pathname.startsWith("/meeting");
 
@@ -113,59 +113,61 @@ export default function Navbar() {
             <span>Architecture</span>
           </Link>
 
-          {isMounted && isInterviewer && (
-            <>
-              <Link
-                href="/schedule"
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                  pathname === "/schedule"
-                    ? "bg-white/15 text-white font-semibold"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Schedule</span>
-              </Link>
+          <Link
+            href="/schedule"
+            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+              pathname === "/schedule"
+                ? "bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-500/20"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            <span>Schedule</span>
+          </Link>
 
-              <Link
-                href="/dashboard"
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                  pathname.startsWith("/dashboard")
-                    ? "bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-500/20"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>Dashboard</span>
-              </Link>
-            </>
+          {isMounted && isInterviewer && (
+            <Link
+              href="/dashboard"
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                pathname.startsWith("/dashboard")
+                  ? "bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-500/20"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span>Dashboard</span>
+            </Link>
           )}
         </div>
 
         {/* RIGHT: ROLE BADGE + NOTIFICATIONS + USER PROFILE */}
         <SignedIn>
           <div className="flex items-center gap-2.5">
-            {/* Deterministic Role Badge (No switch option - determined at sign up) */}
+            {/* Interactive Role Switcher Pill */}
             {isMounted && (
-              <div
-                className={`px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 border shadow-sm ${
+              <button
+                onClick={() => switchRole(isInterviewer ? "candidate" : "interviewer")}
+                title={`Active Role: ${isInterviewer ? "Interviewer" : "Candidate"} — Click to switch role`}
+                className={`px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 border shadow-sm cursor-pointer transition-all hover:scale-105 active:scale-95 ${
                   isInterviewer
-                    ? "bg-indigo-500/15 border-indigo-400/30 text-indigo-300"
-                    : "bg-emerald-500/15 border-emerald-400/30 text-emerald-300"
+                    ? "bg-indigo-500/15 border-indigo-400/30 text-indigo-300 hover:bg-indigo-500/25"
+                    : "bg-emerald-500/15 border-emerald-400/30 text-emerald-300 hover:bg-emerald-500/25"
                 }`}
               >
                 {isInterviewer ? (
                   <>
                     <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
                     <span>Interviewer</span>
+                    <span className="text-[10px] text-indigo-400/70 ml-0.5">⇄</span>
                   </>
                 ) : (
                   <>
                     <User className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Candidate</span>
+                    <span className="text-[10px] text-emerald-400/70 ml-0.5">⇄</span>
                   </>
                 )}
-              </div>
+              </button>
             )}
 
             <NotificationBell />

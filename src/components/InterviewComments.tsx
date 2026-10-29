@@ -268,8 +268,8 @@ export function InterviewComments({ interviewId, status, dateTimeControls }: Int
                 <div className="space-y-4">
                   <AnimatePresence mode="wait">
                     {comments?.map((comment) => {
-                      const interviewer = getInterviewerInfo(users, comment.userId);
-                      const isOwnComment = comment.userId === user.id;
+                      const interviewer = getInterviewerInfo(users || [], comment.userId);
+                      const isOwnComment = user?.id ? comment.userId === user.id : false;
                       return (
                         <motion.div
                           key={comment._id}

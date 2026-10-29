@@ -38,29 +38,37 @@ export const groupInterviews = (interviews: Interview[]): Record<string, Intervi
   }, {});
 };
 
-export const getCandidateInfo = (users: User[], candidateId: string) => {
-  const candidate = users?.find((user) => user.clerkId === candidateId);
+export const getCandidateInfo = (users?: User[] | null, candidateId?: string) => {
+  const candidate = candidateId && Array.isArray(users) ? users.find((user) => user.clerkId === candidateId) : null;
+  const name = candidate?.name || "Unknown Candidate";
   return {
-    name: candidate?.name || "Unknown Candidate",
+    name,
     image: candidate?.image || "",
     initials:
-      candidate?.name
-        ?.split(" ")
+      name
+        .split(" ")
         .map((n) => n[0])
-        .join("") || "UC",
+        .filter(Boolean)
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "UC",
   };
 };
 
-export const getInterviewerInfo = (users: User[], interviewerId: string) => {
-  const interviewer = users?.find((user) => user.clerkId === interviewerId);
+export const getInterviewerInfo = (users?: User[] | null, interviewerId?: string) => {
+  const interviewer = interviewerId && Array.isArray(users) ? users.find((user) => user.clerkId === interviewerId) : null;
+  const name = interviewer?.name || "Unknown Interviewer";
   return {
-    name: interviewer?.name || "Unknown Interviewer",
+    name,
     image: interviewer?.image,
     initials:
-      interviewer?.name
-        ?.split(" ")
+      name
+        .split(" ")
         .map((n) => n[0])
-        .join("") || "UI",
+        .filter(Boolean)
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "UI",
   };
 };
 

@@ -28,34 +28,39 @@ const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
         ? `${user.firstName} ${user.lastName || ""}`.trim()
         : user.username || user.id);
 
-    const client = new StreamVideoClient({ apiKey });
-    clientRef.current = client;
+    const initStream = async () => {
+      try {
+        const token = await streamTokenProvider().catch(() => "");
+        if (!token || token.trim() === "" || !isMounted) {
+          // STREAM_SECRET_KEY not yet configured in environment or user unauthenticated
+          return;
+        }
 
-    // Connect user with token provider
-    client
-      .connectUser(
-        {
-          id: user.id,
-          name: displayName,
-          image: user.imageUrl,
-        },
-        streamTokenProvider
-      )
-      .then(() => {
+        const client = new StreamVideoClient({ apiKey });
+        clientRef.current = client;
+
+        await client.connectUser(
+          {
+            id: user.id,
+            name: displayName,
+            image: user.imageUrl,
+          },
+          token
+        );
+
         if (isMounted) {
           setStreamVideoClient(client);
           setIsWsError(false);
         }
-      })
-      .catch((err) => {
-        console.warn(
-          "GetStream connection notice:",
-          err?.message || err
-        );
+      } catch (err: any) {
+        console.warn("GetStream connection notice:", err?.message || err);
         if (isMounted) {
           setIsWsError(true);
         }
-      });
+      }
+    };
+
+    initStream();
 
     return () => {
       isMounted = false;

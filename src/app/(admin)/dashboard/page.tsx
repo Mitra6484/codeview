@@ -12,7 +12,7 @@ import { INTERVIEW_CATEGORY } from "@/constants"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CalendarIcon, CheckCircle2Icon, ClockIcon, CodeIcon, PlusIcon, XCircleIcon, CalendarDays } from "lucide-react"
+import { CalendarIcon, CheckCircle2Icon, ClockIcon, CodeIcon, PlusIcon, XCircleIcon, CalendarDays, ShieldCheck } from "lucide-react"
 import { format } from "date-fns"
 import { InterviewComments } from "@/components/InterviewComments"
 import PageTransition from "@/components/PageTransition"
@@ -23,15 +23,51 @@ type Interview = Doc<"interviews">
 
 function DashboardPage() {
   const router = useRouter();
-  const { isInterviewer, isLoading } = useUserRole();
+  const { isInterviewer, isMounted, isLoading, switchRole } = useUserRole();
   const users = useQuery(api.users.getUsers)
   const interviews = useQuery(api.interviews.getAllInterviews)
   const updateStatus = useMutation(api.interviews.updateInterviewStatus)
 
-  // Redirect if not an interviewer
-  if (!isLoading && !isInterviewer) {
-    router.push("/");
-    return null;
+  if (!isMounted || isLoading) return <LoaderUI />
+
+  // If candidate visits dashboard, provide clear mode-switching UI instead of abrupt kick
+  if (!isInterviewer) {
+    return (
+      <PageTransition>
+        <div className="container mx-auto py-16 px-4 max-w-2xl text-center">
+          <div className="glass-card rounded-3xl border border-white/10 p-8 sm:p-12 space-y-6 shadow-2xl">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-500/15 border border-indigo-400/30 text-indigo-400 mx-auto flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <ShieldCheck className="h-8 w-8" />
+            </div>
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-surface text-xs font-mono text-indigo-300 border border-indigo-500/20">
+                <span>Interviewer Portal</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
+                Interviewer Access Required
+              </h1>
+              <p className="text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                You are currently signed in with candidate privileges. Switch to Interviewer Mode to access the cohort question bank, schedule candidate sessions, and inspect AI scorecards.
+              </p>
+            </div>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => switchRole("interviewer")}
+                className="w-full sm:w-auto glass-btn-primary px-6 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 cursor-pointer"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Switch to Interviewer Mode</span>
+              </button>
+              <Link href="/" className="w-full sm:w-auto">
+                <button className="w-full sm:w-auto glass-btn-secondary px-5 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white cursor-pointer border border-white/10">
+                  Return to Home
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </PageTransition>
+    );
   }
 
   const handleStatusUpdate = async (interviewId: Id<"interviews">, status: "scheduled" | "live" | "completed" | "succeeded" | "failed") => {
@@ -43,7 +79,7 @@ function DashboardPage() {
     }
   }
 
-  if (isLoading || !interviews || !users) return <LoaderUI />
+  if (!interviews || !users) return <LoaderUI />
 
   const groupedInterviews = groupInterviews(interviews) as Record<string, Interview[]>
   const hasInterviews = Object.values(groupedInterviews).some(category => category.length > 0)
@@ -125,13 +161,13 @@ function DashboardPage() {
                               <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-3">
                                   <Avatar className="h-10 w-10 border border-white/15">
-                                    <AvatarImage src={candidateInfo.image || "/placeholder.svg"} />
+                                    <AvatarImage src={candidateInfo?.image || "/placeholder.svg"} />
                                     <AvatarFallback className="bg-indigo-900/50 text-indigo-300 text-xs font-bold">
-                                      {candidateInfo.initials}
+                                      {candidateInfo?.initials || "CA"}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div>
-                                    <h3 className="text-sm font-bold text-white">{candidateInfo.name}</h3>
+                                    <h3 className="text-sm font-bold text-white">{candidateInfo?.name || "Candidate"}</h3>
                                     <p className="text-xs text-slate-400 line-clamp-1">{interview.title}</p>
                                   </div>
                                 </div>

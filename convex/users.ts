@@ -45,3 +45,22 @@ export const getUserByClerkId = query({
       .first();
   },
 });
+
+export const updateUserRole = mutation({
+  args: {
+    role: v.union(v.literal("candidate"), v.literal("interviewer")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (user) {
+      await ctx.db.patch(user._id, { role: args.role });
+    }
+  },
+});
