@@ -14,7 +14,7 @@ import {
   BarChart3,
   Mail,
 } from "lucide-react";
-import { ExecutiveScorecardResponse } from "@/actions/ai/generate-scorecard";
+import type { ExecutiveScorecardResponse } from "@/actions/ai/generate-scorecard";
 
 interface ExecutiveScorecardViewProps {
   scorecard: ExecutiveScorecardResponse;

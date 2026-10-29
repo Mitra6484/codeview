@@ -37,8 +37,8 @@ import {
   SlidersHorizontal,
   ChevronDown,
 } from "lucide-react";
-import {
-  evaluateSystemArchitecture,
+import { evaluateSystemArchitecture } from "@/actions/ai/architecture-critic";
+import type {
   ArchitectureCriticResponse,
   SystemNode,
   SystemEdge,

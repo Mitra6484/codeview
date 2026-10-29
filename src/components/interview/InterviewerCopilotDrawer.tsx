@@ -19,7 +19,7 @@ import {
   ArrowRight,
   Send,
 } from "lucide-react";
-import { CopilotResponse } from "@/actions/ai/interviewer-copilot";
+import type { CopilotResponse } from "@/actions/ai/interviewer-copilot";
 import type { CodeAnalysisResult } from "@/actions/analyze-code";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";

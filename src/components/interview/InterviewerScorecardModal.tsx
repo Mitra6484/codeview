@@ -22,10 +22,8 @@ import {
   ShieldCheck,
   Code2,
 } from "lucide-react";
-import {
-  generateExecutiveScorecard,
-  ExecutiveScorecardResponse,
-} from "@/actions/ai/generate-scorecard";
+import { generateExecutiveScorecard } from "@/actions/ai/generate-scorecard";
+import type { ExecutiveScorecardResponse } from "@/actions/ai/generate-scorecard";
 import { useUser } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";

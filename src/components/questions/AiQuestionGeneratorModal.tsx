@@ -15,10 +15,8 @@ import {
   Terminal,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import {
-  generateInterviewQuestion,
-  GeneratedQuestionResponse,
-} from "@/actions/ai/generate-question";
+import { generateInterviewQuestion } from "@/actions/ai/generate-question";
+import type { GeneratedQuestionResponse } from "@/actions/ai/generate-question";
 
 interface AiQuestionGeneratorModalProps {
   isOpen: boolean;

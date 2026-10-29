@@ -8,7 +8,8 @@ import { Id } from "../../../../../convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import LoaderUI from "@/components/LoaderUI";
 import { ArrowLeft, Calendar, Clock, Sparkles, CheckCircle2 } from "lucide-react";
-import { generateExecutiveScorecard, ExecutiveScorecardResponse } from "@/actions/ai/generate-scorecard";
+import { generateExecutiveScorecard } from "@/actions/ai/generate-scorecard";
+import type { ExecutiveScorecardResponse } from "@/actions/ai/generate-scorecard";
 import ExecutiveScorecardView from "@/components/evaluation/ExecutiveScorecardView";
 
 export default function InterviewPage({ params }: { params: { id: string } }) {

@@ -37,12 +37,14 @@ import { useVoiceInterview } from "@/hooks/useVoiceInterview";
 import {
   processVoiceInterviewTurn,
   evaluateMockInterviewSession,
+} from "@/actions/ai/voice-mock-agent";
+import type {
   VoiceTurnResponse,
   MockSessionEvaluationResponse,
-  AURA_PERSONAS,
-  AuraPersonaId,
 } from "@/actions/ai/voice-mock-agent";
-import { executeCode, ExecuteCodeResult } from "@/actions/execute-code";
+import { AURA_PERSONAS, AuraPersonaId } from "@/constants/personas";
+import { executeCode } from "@/actions/execute-code";
+import type { ExecuteCodeResult } from "@/actions/execute-code";
 import LoaderUI from "@/components/LoaderUI";
 import toast from "react-hot-toast";
 
